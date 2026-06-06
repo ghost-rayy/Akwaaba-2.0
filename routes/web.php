@@ -1,27 +1,34 @@
 <?php
 
+use App\Livewire\Admin\Companies as AdminCompanies;
+use App\Livewire\Admin\Dashboard as AdminDashboard;
+use App\Livewire\Admin\Personnel as AdminPersonnel;
 use App\Livewire\Company\Attendance as CompanyAttendance;
 use App\Livewire\Company\Dashboard as CompanyDashboard;
 use App\Livewire\Company\Departments as CompanyDepartments;
+use App\Livewire\Company\EndorsedLetters as CompanyEndorsedLetters;
 use App\Livewire\Company\EndorseLetters as CompanyEndorseLetters;
 use App\Livewire\Company\Evaluation as CompanyEvaluation;
 use App\Livewire\Company\Letters as CompanyLetters;
 use App\Livewire\Company\ManagePersonnel as CompanyManagePersonnel;
 use App\Livewire\Company\OnboardPersonnel as CompanyOnboard;
+use App\Livewire\Company\Report as CompanyReport;
 use App\Livewire\Company\Settings as CompanySettings;
 use App\Livewire\Company\Shortlist as CompanyShortlist;
+use App\Livewire\Personnel\Attendance as PersonnelAttendance;
 use App\Livewire\Personnel\Dashboard as PersonnelDashboard;
+use App\Livewire\Personnel\Documents as PersonnelDocuments;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome');
+Route::redirect('/', '/login');
 
 Route::middleware(['auth'])->group(function () {
 
     // Super Admin routes
     Route::middleware('role:super_admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
-        })->name('dashboard');
+        Route::get('/dashboard', AdminDashboard::class)->name('dashboard');
+        Route::get('/companies', AdminCompanies::class)->name('companies');
+        Route::get('/personnel', AdminPersonnel::class)->name('personnel');
     });
 
     // Company routes (company_admin + hr_staff)
@@ -33,10 +40,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/manage-personnel', CompanyManagePersonnel::class)->name('personnel');
         Route::get('/attendance', CompanyAttendance::class)->name('attendance');
         Route::get('/evaluations', CompanyEvaluation::class)->name('evaluations');
+        Route::get('/reports', CompanyReport::class)->name('reports');
         Route::get('/letters', CompanyLetters::class)->name('letters');
         // Admin-only routes
         Route::middleware('role:company_admin')->group(function () {
             Route::get('/endorse', CompanyEndorseLetters::class)->name('endorse');
+            Route::get('/endorsed-letters', CompanyEndorsedLetters::class)->name('endorsed-letters');
             Route::get('/settings', CompanySettings::class)->name('settings');
         });
     });
@@ -44,14 +53,45 @@ Route::middleware(['auth'])->group(function () {
     // NSS Personnel routes
     Route::middleware('role:nss_personnel')->prefix('personnel')->name('personnel.')->group(function () {
         Route::get('/dashboard', PersonnelDashboard::class)->name('dashboard');
+
+        Route::middleware('completed.profile')->group(function () {
+            Route::get('/attendance', PersonnelAttendance::class)->name('attendance');
+            Route::get('/documents', PersonnelDocuments::class)->name('documents');
+        });
     });
 
     // Fallback dashboard
-    Route::view('/dashboard', 'dashboard')->name('dashboard');
+    Route::get('/dashboard', function () {
+        return match (auth()->user()->role) {
+            'super_admin' => redirect()->route('admin.dashboard'),
+            'company_admin', 'hr_staff' => redirect()->route('company.dashboard'),
+            'nss_personnel' => redirect()->route('personnel.dashboard'),
+            default => view('dashboard'),
+        };
+    })->name('dashboard');
 
     Route::view('profile', 'profile')
         ->middleware(['auth'])
         ->name('profile');
+
+    Route::get('/document/stream/{id}', function ($id) {
+        $document = \App\Models\Document::findOrFail($id);
+        $user = auth()->user();
+        
+        if ($user->role !== 'super_admin' && $user->company_id !== $document->company_id && $user->id !== $document->user_id) {
+            abort(403);
+        }
+
+        $path = storage_path('app/public/' . $document->file_path);
+        if (!file_exists($path)) {
+            abort(404);
+        }
+
+        return response()->file($path, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline',
+        ]);
+    })->name('document.stream');
 });
 
 require __DIR__.'/auth.php';

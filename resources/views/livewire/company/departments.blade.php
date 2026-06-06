@@ -1,7 +1,7 @@
 <div>
     <div class="flex justify-between items-center mb-6">
         <h3 class="text-lg font-medium text-gray-900">Departments</h3>
-        <button wire:click="create" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm">
+        <button wire:click="create" class="bg-stormy-600 text-white px-4 py-2 rounded-md hover:bg-stormy-700 text-sm">
             + Add Department
         </button>
     </div>
@@ -12,12 +12,12 @@
             <form wire:submit="save" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Department Name</label>
-                    <input wire:model="name" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <input wire:model="name" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500">
                     @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Department Head</label>
-                    <select wire:model="head_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <select wire:model="head_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500">
                         <option value="">-- Select Head --</option>
                         @foreach($companyUsers as $user)
                             <option value="{{ $user->id }}">{{ $user->name }} ({{ ucfirst(str_replace('_', ' ', $user->role)) }})</option>
@@ -26,7 +26,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Supervisor <span class="text-gray-400">(optional)</span></label>
-                    <select wire:model="supervisor_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <select wire:model="supervisor_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500">
                         <option value="">-- Select Supervisor --</option>
                         @foreach($companyUsers as $user)
                             <option value="{{ $user->id }}">{{ $user->name }} ({{ ucfirst(str_replace('_', ' ', $user->role)) }})</option>
@@ -34,7 +34,7 @@
                     </select>
                 </div>
                 <div class="flex space-x-3">
-                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm">
+                    <button type="submit" class="bg-stormy-600 text-white px-4 py-2 rounded-md hover:bg-stormy-700 text-sm">
                         {{ $departmentId ? 'Update' : 'Save' }}
                     </button>
                     <button type="button" wire:click="cancel" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 text-sm">
@@ -65,7 +65,7 @@
                             <td class="px-6 py-4">{{ $dept->head?->name ?? '—' }}</td>
                             <td class="px-6 py-4">{{ $dept->supervisor?->name ?? '—' }}</td>
                             <td class="px-6 py-4 text-right space-x-2">
-                                <button wire:click="edit({{ $dept->id }})" class="text-indigo-600 hover:text-indigo-900 text-sm">Edit</button>
+                                <button wire:click="edit({{ $dept->id }})" class="text-stormy-600 hover:text-stormy-900 text-sm">Edit</button>
                                 <button wire:click="confirmDelete({{ $dept->id }})" class="text-red-600 hover:text-red-900 text-sm">Delete</button>
                             </td>
                         </tr>

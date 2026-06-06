@@ -9,7 +9,7 @@ You have been successfully onboarded to **{{ $user->company?->name }}** for your
 - **NSS Number:** {{ $user->nss_number }}
 - **Temporary Password:** `{{ $temporaryPassword }}`
 
-<x-mail::button :url="route('login')">
+<x-mail::button :url="route('personnel.login')">
 Login to Portal
 </x-mail::button>
 

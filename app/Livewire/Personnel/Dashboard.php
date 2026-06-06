@@ -24,6 +24,9 @@ class Dashboard extends Component
     public $email;
     public $place_of_residence;
     public $region_of_residence;
+    public $nss_year;
+
+    public $years = [];
 
     // Step 2: Education Info
     public $university;
@@ -48,11 +51,14 @@ class Dashboard extends Component
 
     public function mount()
     {
+        $currentYear = (int) date('Y');
+        $this->years = range($currentYear, $currentYear - 10);
         $user = auth()->user();
         $this->nss_number = $user->nss_number ?? '';
         $this->phone = $user->phone ?? '';
         $this->email = $user->email ?? '';
         $this->full_name = $user->name ?? '';
+        $this->nss_year = $user->enrollment?->nss_year ?? (string) $currentYear;
 
         if ($info = $user->personalInfo) {
             $this->full_name = $info->full_name;
@@ -101,6 +107,7 @@ class Dashboard extends Component
             'email' => 'required|email',
             'place_of_residence' => 'required|string',
             'region_of_residence' => 'required|string',
+            'nss_year' => 'required|string|digits:4',
         ]);
 
         $user = auth()->user();
@@ -117,6 +124,7 @@ class Dashboard extends Component
             ]
         );
 
+        $user->enrollment?->update(['nss_year' => $this->nss_year]);
         $user->update(['name' => $this->full_name, 'form_step' => 1]);
         $this->successMessage = 'Personal information saved!';
     }
@@ -192,13 +200,34 @@ class Dashboard extends Component
     {
         $user = auth()->user();
         $enrollment = $user->enrollment;
+        $endorsedLetter = null;
+
+        if ($enrollment) {
+            $endorsedLetter = \App\Models\EndorsedLetter::where('enrollment_id', $enrollment->id)
+                ->latest()
+                ->first();
+        }
+
+        $evaluations = \App\Models\Evaluation::where('user_id', $user->id)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $recentAttendance = \App\Models\Attendance::where('user_id', $user->id)
+            ->latest('date')
+            ->take(7)
+            ->get();
 
         return view('livewire.personnel.dashboard', [
-            'step' => $user->must_change_password ? 0 : $user->form_step,
+            'step' => $user->must_change_password ? 0 : $user->form_step + 1,
             'enrollmentStatus' => $enrollment?->status,
+            'rejectionReason' => $enrollment?->rejection_reason,
             'companyName' => $user->company?->name,
             'departmentName' => $enrollment?->department?->name,
             'documentCount' => $user->documents()->count(),
+            'endorsedLetter' => $endorsedLetter,
+            'evaluations' => $evaluations,
+            'recentAttendance' => $recentAttendance,
         ])->layout('layouts.personnel');
     }
 }

@@ -1,3 +1,104 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --color-stormy-50: #f0f5fa;
+        --color-stormy-100: #d9e7f3;
+        --color-stormy-200: #bdddfc;
+        --color-stormy-300: #9fcdf0;
+        --color-stormy-400: #88bdf2;
+        --color-stormy-500: #6a89a7;
+        --color-stormy-600: #55708a;
+        --color-stormy-700: #384959;
+        --color-stormy-800: #2a3643;
+        --color-stormy-900: #1c242d;
+    }
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+@keyframes slide-in-right {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+@keyframes slide-out-right {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+@keyframes indeterminate-progress {
+    0% {
+        left: -35%;
+        right: 100%;
+    }
+    60% {
+        left: 100%;
+        right: -90%;
+    }
+    100% {
+        left: 100%;
+        right: -90%;
+    }
+}
+@keyframes indeterminate-progress-short {
+    0% {
+        left: -200%;
+        right: 100%;
+    }
+    60% {
+        left: 107%;
+        right: -8%;
+    }
+    100% {
+        left: 107%;
+        right: -8%;
+    }
+}
+
+.animate-slide-in {
+    animation: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-out {
+    animation: slide-out-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.progress-bar-indeterminate {
+    position: relative;
+    overflow: hidden;
+}
+.progress-bar-indeterminate::before {
+    content: '';
+    position: absolute;
+    background-color: inherit;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    will-change: left, right;
+    animation: indeterminate-progress 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+}
+.progress-bar-indeterminate::after {
+    content: '';
+    position: absolute;
+    background-color: inherit;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    will-change: left, right;
+    animation: indeterminate-progress-short 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+    animation-delay: 1.15s;
+}
+

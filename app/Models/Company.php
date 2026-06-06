@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Company extends Model
 {
     protected $fillable = [
-        'name', 'email', 'phone', 'location', 'postal_address',
-        'digital_signature_path', 'stamp_path', 'registration_number',
+        'name', 'email', 'phone', 'location', 'postal_address', 'posting_date',
+        'digital_signature_path', 'stamp_path', 'posting_letter_path', 'registration_number',
         'contact_person', 'is_active',
     ];
 

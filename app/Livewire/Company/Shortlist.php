@@ -10,6 +10,9 @@ class Shortlist extends Component
     public $selectedPersonnelId = null;
     public $rejectionReason = '';
     public $confirmingRejection = false;
+    public $viewingLetterId = null;
+    public $viewingLetterUrl = '';
+    public $viewingLetterBase64 = '';
 
     public function shortlist($enrollmentId)
     {
@@ -49,6 +52,26 @@ class Shortlist extends Component
         $this->rejectionReason = '';
 
         session()->flash('message', 'Personnel rejected.');
+    }
+
+    public function viewLetter($enrollmentId)
+    {
+        $enrollment = Enrollment::with('user')->findOrFail($enrollmentId);
+        $letter = $enrollment->user->documents()->where('type', 'posting_letter')->first();
+        if ($letter) {
+            $path = storage_path('app/public/' . $letter->file_path);
+            if (file_exists($path)) {
+                $this->viewingLetterBase64 = base64_encode(file_get_contents($path));
+                $this->viewingLetterId = $enrollmentId;
+            }
+        }
+    }
+
+    public function closeViewer()
+    {
+        $this->viewingLetterId = null;
+        $this->viewingLetterUrl = '';
+        $this->viewingLetterBase64 = '';
     }
 
     public function render()

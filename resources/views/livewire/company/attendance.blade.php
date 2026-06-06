@@ -12,9 +12,9 @@
         </div>
         <div class="flex items-center gap-3">
             <input type="date" wire:model.live="selectedDate"
-                   class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                   class="rounded-md border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500 text-sm">
             <button wire:click="saveAll" wire:loading.attr="disabled"
-                    class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium">
+                    class="bg-stormy-600 text-white px-4 py-2 rounded-md hover:bg-stormy-700 text-sm font-medium">
                 <span wire:loading.remove>Save All</span>
                 <span wire:loading>Saving...</span>
             </button>

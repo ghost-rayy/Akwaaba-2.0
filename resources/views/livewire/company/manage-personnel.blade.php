@@ -15,11 +15,11 @@
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div>
                 <input type="text" wire:model.live="search" placeholder="Search name, NSS#, email..."
-                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500 text-sm">
             </div>
             <div>
                 <select wire:model.live="filterDepartment"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500 text-sm">
                     <option value="">All Departments</option>
                     @foreach ($departments as $dept)
                         <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -28,7 +28,7 @@
             </div>
             <div>
                 <select wire:model.live="filterStatus"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500 text-sm">
                     <option value="">All Statuses</option>
                     @foreach ($statuses as $status)
                         <option value="{{ $status }}">{{ str_replace('_', ' ', ucfirst($status)) }}</option>
@@ -79,8 +79,9 @@
                                     'pending_review' => 'bg-blue-100 text-blue-800',
                                     'shortlisted' => 'bg-green-100 text-green-800',
                                     'rejected' => 'bg-red-100 text-red-800',
-                                    'endorsed' => 'bg-purple-100 text-purple-800',
-                                    'active' => 'bg-emerald-100 text-emerald-800',
+                                    'endorsed' => 'bg-stormy-100 text-stormy-800',
+                                    'validated' => 'bg-emerald-100 text-emerald-800',
+                                    'active' => 'bg-teal-100 text-teal-800',
                                     'completed' => 'bg-gray-100 text-gray-800',
                                     default => 'bg-gray-100 text-gray-800',
                                 };
@@ -91,7 +92,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                             <button wire:click="startAssign({{ $e->id }})"
-                                    class="text-indigo-600 hover:text-indigo-800 text-xs font-medium">
+                                    class="text-stormy-600 hover:text-stormy-800 text-xs font-medium">
                                 {{ $e->department ? 'Change Dept' : 'Assign Dept' }}
                             </button>
                         </td>
@@ -117,7 +118,7 @@
             <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
                 <h3 class="text-lg font-semibold mb-4">Assign Department</h3>
                 <select wire:model="assignDepartmentId"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500">
                     <option value="">Select Department</option>
                     @foreach ($departments as $dept)
                         <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -130,7 +131,7 @@
                         Cancel
                     </button>
                     <button wire:click="saveDepartment"
-                            class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                            class="px-4 py-2 text-sm text-white bg-stormy-600 rounded-md hover:bg-stormy-700">
                         Save
                     </button>
                 </div>

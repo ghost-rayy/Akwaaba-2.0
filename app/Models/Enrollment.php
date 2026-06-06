@@ -8,7 +8,7 @@ class Enrollment extends Model
 {
     protected $fillable = [
         'user_id', 'company_id', 'department_id', 'enrolled_by',
-        'nss_number', 'status', 'start_date', 'end_date',
+        'nss_number', 'nss_year', 'status', 'start_date', 'end_date',
         'endorsement_date', 'validated_at', 'rejection_reason',
     ];
 

@@ -13,7 +13,7 @@ class ManagePersonnel extends Component
 
     public $search = '';
     public $filterDepartment = '';
-    public $filterStatus = '';
+    public $filterStatus = 'validated';
     public $assigningPersonnelId = null;
     public $assignDepartmentId = '';
 
@@ -72,7 +72,7 @@ class ManagePersonnel extends Component
         return view('livewire.company.manage-personnel', [
             'enrollments' => $query->latest()->paginate(15),
             'departments' => Department::where('company_id', $company->id)->get(),
-            'statuses' => ['pending_forms', 'pending_review', 'shortlisted', 'rejected', 'endorsed', 'active', 'completed'],
+            'statuses' => ['pending_forms', 'pending_review', 'shortlisted', 'rejected', 'endorsed', 'validated', 'active', 'completed'],
         ])->layout('layouts.company');
     }
 }

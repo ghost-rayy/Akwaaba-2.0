@@ -8,7 +8,7 @@ class EndorsedLetter extends Model
 {
     protected $fillable = [
         'enrollment_id', 'letter_template_id', 'endorsed_by',
-        'generated_file_path', 'status', 'validated_file_path', 'validated_at',
+        'generated_file_path', 'status', 'validated_file_path', 'validated_at', 'validated_by',
     ];
 
     public function enrollment()
@@ -24,5 +24,10 @@ class EndorsedLetter extends Model
     public function endorsedBy()
     {
         return $this->belongsTo(User::class, 'endorsed_by');
+    }
+
+    public function validatedBy()
+    {
+        return $this->belongsTo(User::class, 'validated_by');
     }
 }

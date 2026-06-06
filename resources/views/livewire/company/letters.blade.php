@@ -9,116 +9,89 @@
     @if ($mode === 'list')
         <div class="flex items-center justify-between mb-6">
             <div>
-                <h2 class="text-xl font-semibold">Letter Templates</h2>
-                <p class="text-sm text-gray-500">Upload and configure NSS posting letter templates.</p>
+                <h2 class="text-xl font-semibold">Posting Letter Field Mapping</h2>
+                <p class="text-sm text-gray-500">Configure field positions on the company posting letter template.</p>
             </div>
-            <button wire:click="showCreate"
-                    class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium">
-                Upload Template
-            </button>
         </div>
 
-        @if ($templates->isEmpty())
-            <div class="bg-white rounded-lg shadow p-12 text-center">
-                <p class="text-gray-500">No templates yet. Upload a PDF template to get started.</p>
+        @if ($template)
+            <div class="bg-white rounded-lg shadow p-6 border border-gray-200">
+                <div class="flex items-start justify-between mb-3">
+                    <div>
+                        <h3 class="font-semibold">{{ $template->name }}</h3>
+                        <p class="text-sm text-gray-500">
+                            {{ $template->field_mappings_count }} fields mapped
+                        </p>
+                    </div>
+                    <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Active</span>
+                </div>
+                <div class="flex gap-2">
+                    <button wire:click="startMapping({{ $template->id }})"
+                            class="text-stormy-600 text-sm hover:text-stormy-800 font-medium">
+                        {{ $template->field_mappings_count > 0 ? 'Edit Fields' : 'Configure Fields' }}
+                    </button>
+                    <button wire:click="deleteTemplate({{ $template->id }})"
+                            wire:confirm="Delete this template? Field mappings will be lost."
+                            class="text-red-600 text-sm hover:text-red-800 ml-auto">
+                        Delete
+                    </button>
+                </div>
             </div>
         @else
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach ($templates as $template)
-                    <div class="bg-white rounded-lg shadow p-6 border {{ $template->is_active ? 'border-green-300' : 'border-gray-200' }}">
-                        <div class="flex items-start justify-between mb-3">
-                            <div>
-                                <h3 class="font-semibold">{{ $template->name }}</h3>
-                                <p class="text-xs text-gray-500">
-                                    {{ $template->field_mappings_count }} fields mapped
-                                    &middot; {{ $template->pages_count }} page(s)
-                                </p>
-                            </div>
-                            @if ($template->is_active)
-                                <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Active</span>
-                            @endif
-                        </div>
-                        <div class="flex gap-2">
-                            <button wire:click="startMapping({{ $template->id }})"
-                                    class="text-indigo-600 text-sm hover:text-indigo-800 font-medium">
-                                {{ $template->field_mappings_count > 0 ? 'Edit Fields' : 'Configure Fields' }}
-                            </button>
-                            <button wire:click="deleteTemplate({{ $template->id }})"
-                                    wire:confirm="Delete this template?"
-                                    class="text-red-600 text-sm hover:text-red-800 ml-auto">
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                @endforeach
+            <div class="bg-white rounded-lg shadow p-12 text-center">
+                <p class="text-gray-500 mb-2">No posting letter template uploaded yet.</p>
+                <p class="text-sm text-gray-400">Go to <a href="{{ route('company.settings') }}" class="text-stormy-600 underline">Settings</a> to upload the company posting letter PDF.</p>
             </div>
         @endif
 
-    {{-- CREATE MODE --}}
-    @elseif ($mode === 'create')
-        <div class="max-w-lg mx-auto">
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center mb-6">
-                    <button wire:click="$set('mode', 'list')" class="text-indigo-600 hover:text-indigo-800 text-sm">&larr; Back</button>
-                    <h2 class="text-xl font-semibold ml-4">Upload Letter Template</h2>
-                </div>
-                <form wire:submit="saveTemplate" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Template Name</label>
-                        <input type="text" wire:model="name"
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">PDF File</label>
-                        <input type="file" wire:model="template_file" accept=".pdf"
-                               class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                        @error('template_file') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        <div wire:loading wire:target="template_file" class="text-indigo-600 text-sm mt-1">Uploading...</div>
-                    </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" wire:click="$set('mode', 'list')"
-                                class="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm">
-                            Upload Template
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
     {{-- MAPPING MODE --}}
     @elseif ($mode === 'mapping' && $currentTemplate)
-        <div x-data="templateBuilder()" x-init="init()" @load-fields.window="setFields($event.detail.fields)">
+        <div x-data="templateBuilder" wire:ignore data-pdf-url="{{ $templateBase64 }}"
+             data-fields='{{ json_encode($currentTemplate->fieldMappings->map(fn($fm) => ["id" => $fm->id, "x" => (float)$fm->x, "y" => (float)$fm->y, "w" => (float)($fm->width??150), "h" => (float)($fm->height??30), "field_key" => $fm->field_key, "label" => $fm->label, "font_size" => $fm->font_size??12, "text_alignment" => $fm->text_alignment??"left", "page_number" => (int)($fm->page_number??1)])) }}'>
             <div class="flex items-center mb-4">
-                <button wire:click="$set('mode', 'list')" class="text-indigo-600 hover:text-indigo-800 text-sm">&larr; Back to Templates</button>
+                <button wire:click="$set('mode', 'list')" class="text-stormy-600 hover:text-stormy-800 text-sm">&larr; Back</button>
                 <h2 class="text-xl font-semibold ml-4">Field Mapping: {{ $currentTemplate->name }}</h2>
             </div>
 
             <div class="flex gap-6">
-                <div class="flex-1 bg-white rounded-lg shadow p-4 relative">
-                    <canvas id="pdf-canvas" class="w-full border border-gray-300 rounded"></canvas>
-                    <canvas id="field-overlay" class="absolute top-4 left-4 cursor-crosshair"
-                            style="display:none;"></canvas>
+                <div class="flex-1 bg-white rounded-lg shadow p-4">
+                    <div class="relative">
+                        <canvas id="pdf-canvas" class="w-full border border-gray-300 rounded"></canvas>
+                        <canvas id="field-overlay" class="absolute top-0 left-0 w-full h-full cursor-crosshair"
+                                style="display:none;"></canvas>
+                    </div>
+                    
+                    {{-- Page Controls --}}
+                    <div x-show="numPages > 1" class="flex items-center justify-between mt-4 px-2 pt-3 border-t border-gray-100">
+                        <button type="button" @click="prevPage()" :disabled="currentPage === 1"
+                                class="px-3.5 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold shadow-sm transition-colors">
+                            &larr; Previous Page
+                        </button>
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Page <span x-text="currentPage" class="text-stormy-600"></span> of <span x-text="numPages"></span></span>
+                        <button type="button" @click="nextPage()" :disabled="currentPage === numPages"
+                                class="px-3.5 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold shadow-sm transition-colors">
+                            Next Page &rarr;
+                        </button>
+                    </div>
                 </div>
 
                 <div class="w-80 space-y-4">
                     <div class="bg-white rounded-lg shadow p-4">
                         <h3 class="font-semibold mb-3">Placed Fields</h3>
-                        <template x-for="(field, idx) in fields" :key="field.id">
-                            <div class="border rounded p-2 mb-2 text-sm">
-                                <div class="flex items-center justify-between mb-1">
+                        <template x-for="(field, idx) in fields" :key="field.id ?? idx">
+                            <div :class="selectedFieldId === field.id ? 'border-stormy-500 bg-stormy-50/50 shadow-md ring-2 ring-stormy-400' : 'border-gray-200 bg-gray-50/50'"
+                                 class="border rounded p-2 mb-2 text-sm transition-all cursor-pointer"
+                                 @click="selectField(field.id)">
+                                <div class="flex items-center justify-between gap-1 mb-2">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-stormy-50 text-stormy-700 border border-stormy-100">P. <span x-text="field.page_number || 1"></span></span>
                                     <select x-model="field.field_key" @change="updateField(field.id, {field_key: field.field_key})"
-                                            class="w-full text-xs border-gray-300 rounded">
+                                            class="w-full text-xs border-gray-300 rounded font-semibold text-gray-700">
                                         <option value="">Select field...</option>
                                         @foreach ($availableFields as $key => $label)
                                             <option value="{{ $key }}">{{ $label }}</option>
                                         @endforeach
                                     </select>
-                                    <button @click="deleteField(field.id)" class="text-red-500 hover:text-red-700 ml-1">&times;</button>
+                                    <button @click.stop="deleteField(field.id)" class="text-red-500 hover:text-red-700 ml-1 font-bold text-lg">&times;</button>
                                 </div>
                                 <div class="grid grid-cols-2 gap-1 mt-1">
                                     <div>
@@ -154,45 +127,11 @@
                     </div>
 
                     <button @click="saveMappings()"
-                            class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium">
+                            class="w-full bg-stormy-600 text-white px-4 py-2 rounded-md hover:bg-stormy-700 text-sm font-medium">
                         Save Field Mappings
                     </button>
                 </div>
             </div>
         </div>
-
-        <script>
-            function templateBuilder() {
-                return {
-                    fields: [],
-                    builder: null,
-                    init() {
-                        const pdfUrl = '{{ Storage::url($currentTemplate->template_file_path) }}';
-                        this.$nextTick(() => {
-                            this.builder = window.initPdfBuilder('pdf-canvas', 'field-overlay', pdfUrl, this.fields);
-                        });
-                    },
-                    setFields(fields) {
-                        this.fields = fields;
-                        if (this.builder) this.builder.setFields(fields);
-                    },
-                    updateField(id, data) {
-                        if (this.builder) this.builder.updateField(id, data);
-                    },
-                    deleteField(id) {
-                        this.fields = this.fields.filter(f => f.id !== id);
-                        if (this.builder) this.builder.deleteField(id);
-                    },
-                    saveMappings() {
-                        const valid = this.fields.filter(f => f.field_key);
-                        if (valid.length === 0) {
-                            alert('Place at least one field on the template.');
-                            return;
-                        }
-                        @this.call('saveFieldMappings', valid);
-                    },
-                };
-            }
-        </script>
     @endif
 </div>
