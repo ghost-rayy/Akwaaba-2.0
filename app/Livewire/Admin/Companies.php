@@ -2,7 +2,12 @@
 
 namespace App\Livewire\Admin;
 
+use App\Mail\CompanyAdminOnboardedMail;
 use App\Models\Company;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -11,13 +16,10 @@ class Companies extends Component
     use WithPagination;
 
     public $search = '';
+    public $showModal = false;
     public $editingId = null;
     public $name = '';
-    public $email = '';
-    public $phone = '';
-    public $location = '';
-    public $contact_person = '';
-    public $registration_number = '';
+    public $admin_email = '';
     public $is_active = true;
 
     public function updatingSearch()
@@ -27,8 +29,9 @@ class Companies extends Component
 
     public function create()
     {
-        $this->reset(['editingId', 'name', 'email', 'phone', 'location', 'contact_person', 'registration_number']);
+        $this->reset(['editingId', 'name', 'admin_email']);
         $this->is_active = true;
+        $this->showModal = true;
     }
 
     public function edit($id)
@@ -36,40 +39,55 @@ class Companies extends Component
         $company = Company::findOrFail($id);
         $this->editingId = $company->id;
         $this->name = $company->name;
-        $this->email = $company->email;
-        $this->phone = $company->phone;
-        $this->location = $company->location;
-        $this->contact_person = $company->contact_person;
-        $this->registration_number = $company->registration_number;
+        $this->admin_email = '';
         $this->is_active = $company->is_active;
+        $this->showModal = true;
     }
 
     public function save()
     {
+        if ($this->editingId) {
+            $this->validate([
+                'name' => 'required|string|max:255',
+                'is_active' => 'boolean',
+            ]);
+
+            Company::where('id', $this->editingId)->update([
+                'name' => $this->name,
+                'is_active' => $this->is_active,
+            ]);
+
+            session()->flash('message', 'Company updated.');
+            $this->reset(['editingId', 'name', 'admin_email', 'showModal']);
+            return;
+        }
+
         $this->validate([
             'name' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'location' => 'nullable|string|max:255',
-            'contact_person' => 'nullable|string|max:255',
-            'registration_number' => 'nullable|string|max:255|unique:companies,registration_number,' . ($this->editingId ?? 'NULL'),
+            'admin_email' => 'required|email|unique:users,email',
         ]);
 
-        Company::updateOrCreate(
-            ['id' => $this->editingId],
-            [
-                'name' => $this->name,
-                'email' => $this->email,
-                'phone' => $this->phone,
-                'location' => $this->location,
-                'contact_person' => $this->contact_person,
-                'registration_number' => $this->registration_number,
-                'is_active' => $this->is_active,
-            ]
-        );
+        $company = Company::create([
+            'name' => $this->name,
+            'email' => $this->admin_email,
+            'is_active' => true,
+        ]);
 
-        session()->flash('message', $this->editingId ? 'Company updated.' : 'Company created.');
-        $this->reset(['editingId', 'name', 'email', 'phone', 'location', 'contact_person', 'registration_number']);
+        $password = Str::random(10);
+
+        $admin = User::create([
+            'name' => $this->name . ' Admin',
+            'email' => $this->admin_email,
+            'password' => Hash::make($password),
+            'role' => 'company_admin',
+            'company_id' => $company->id,
+            'must_change_password' => true,
+        ]);
+
+        Mail::to($admin->email)->send(new CompanyAdminOnboardedMail($admin, $password));
+
+        session()->flash('message', "Company created. Login details sent to {$this->admin_email}.");
+        $this->reset(['editingId', 'name', 'admin_email', 'showModal']);
     }
 
     public function render()
@@ -79,8 +97,7 @@ class Companies extends Component
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('email', 'like', '%' . $this->search . '%')
-                    ->orWhere('registration_number', 'like', '%' . $this->search . '%');
+                    ->orWhere('email', 'like', '%' . $this->search . '%');
             });
         }
 

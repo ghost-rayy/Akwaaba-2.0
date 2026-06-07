@@ -300,7 +300,7 @@
         <div class="space-y-6">
             {{-- Status Banner --}}
             @if ($enrollmentStatus === 'pending_review')
-                <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-900 p-5 rounded-2xl shadow-sm flex items-start gap-4">
+                <div class="alert-dismiss bg-amber-50 border-l-4 border-amber-500 text-amber-900 p-5 rounded-2xl shadow-sm flex items-start gap-4">
                     <div class="p-2 bg-amber-100 rounded-xl text-amber-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
@@ -310,7 +310,7 @@
                     </div>
                 </div>
             @elseif ($enrollmentStatus === 'shortlisted')
-                <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-950 p-5 rounded-2xl shadow-sm flex items-start gap-4">
+                <div class="alert-dismiss bg-emerald-50 border-l-4 border-emerald-500 text-emerald-950 p-5 rounded-2xl shadow-sm flex items-start gap-4">
                     <div class="p-2 bg-emerald-100 rounded-xl text-emerald-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
@@ -320,7 +320,7 @@
                     </div>
                 </div>
             @elseif ($enrollmentStatus === 'rejected')
-                <div class="bg-rose-50 border-l-4 border-rose-500 text-rose-950 p-5 rounded-2xl shadow-sm flex items-start gap-4">
+                <div class="alert-dismiss bg-rose-50 border-l-4 border-rose-500 text-rose-950 p-5 rounded-2xl shadow-sm flex items-start gap-4">
                     <div class="p-2 bg-rose-100 rounded-xl text-rose-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
                     </div>
@@ -334,7 +334,7 @@
                     </div>
                 </div>
             @elseif ($enrollmentStatus === 'endorsed' || $enrollmentStatus === 'active')
-                <div class="bg-sky-50 border-l-4 border-sky-500 text-sky-950 p-5 rounded-2xl shadow-sm flex items-start gap-4">
+                <div class="alert-dismiss bg-sky-50 border-l-4 border-sky-500 text-sky-950 p-5 rounded-2xl shadow-sm flex items-start gap-4">
                     <div class="p-2 bg-sky-100 rounded-xl text-sky-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
                     </div>

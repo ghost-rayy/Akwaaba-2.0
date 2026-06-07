@@ -24,7 +24,14 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::regenerate();
 
-        $route = match(auth()->user()->role) {
+        $user = auth()->user();
+
+        if ($user->must_change_password) {
+            $this->redirectIntended(default: route('profile', absolute: false), navigate: true);
+            return;
+        }
+
+        $route = match($user->role) {
             'super_admin' => 'admin.dashboard',
             'company_admin', 'hr_staff' => 'company.dashboard',
             'nss_personnel' => 'personnel.dashboard',

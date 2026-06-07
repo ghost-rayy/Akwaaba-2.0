@@ -166,42 +166,50 @@
 
         <script>
             document.addEventListener('livewire:initialized', () => {
-                Livewire.hook('morph.added', ({ el }) => scanAndShowToasts(el));
-                scanAndShowToasts(document);
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach(mutation => {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.nodeType === 1) {
+                                if (node.classList.contains('alert-dismiss')) {
+                                    handleAlertNode(node);
+                                } else {
+                                    node.querySelectorAll('.alert-dismiss').forEach(el => handleAlertNode(el));
+                                }
+                            }
+                        });
+                    });
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+
+                // Scan initial DOM
+                document.querySelectorAll('.alert-dismiss').forEach(el => handleAlertNode(el));
 
                 Livewire.confirm((message, accept, reject) => {
                     window.showConfirmModal(message, accept, reject);
                 });
             });
 
-            function scanAndShowToasts(scope) {
-                const els = Array.from(scope instanceof Element ? scope.querySelectorAll('.alert-dismiss') : document.querySelectorAll('.alert-dismiss'));
-                if (scope instanceof Element && scope.classList.contains('alert-dismiss')) {
-                    els.push(scope);
-                }
-                els.forEach(el => {
-                    if (el._ad) return;
-                    el._ad = true;
-                    
-                    const message = el.textContent.trim();
-                    if (message) {
-                        let type = 'success';
-                        if (el.classList.contains('bg-rose-50') || el.classList.contains('bg-red-100') || el.classList.contains('text-rose-700')) {
-                            type = 'error';
-                        } else if (el.classList.contains('bg-amber-50') || el.classList.contains('bg-yellow-50')) {
-                            type = 'warning';
-                        }
-                        
-                        // Wait a microtask to ensure toast system has initialized
-                        setTimeout(() => {
-                            if (window.toast) {
-                                window.toast(message, type);
-                            }
-                        }, 50);
+            function handleAlertNode(el) {
+                if (el._ad) return;
+                el._ad = true;
+                
+                const message = el.textContent.trim();
+                if (message) {
+                    let type = 'success';
+                    if (el.classList.contains('bg-rose-50') || el.classList.contains('bg-red-100') || el.classList.contains('text-rose-700')) {
+                        type = 'error';
+                    } else if (el.classList.contains('bg-amber-50') || el.classList.contains('bg-yellow-50')) {
+                        type = 'warning';
                     }
-                    el.style.display = 'none';
-                    el.remove();
-                });
+                    
+                    setTimeout(() => {
+                        if (window.toast) {
+                            window.toast(message, type);
+                        }
+                    }, 50);
+                }
+                el.style.display = 'none';
+                el.remove();
             }
         </script>
     </body>
