@@ -8,7 +8,7 @@ Your company, **{{ $user->company?->name }}**, has been registered on the Akwaab
 - **Email:** {{ $user->email }}
 - **Temporary Password:** `{{ $temporaryPassword }}`
 
-<x-mail::button :url="url('/login')">
+<x-mail::button :url="route('company.login')">
 Login to Portal
 </x-mail::button>
 

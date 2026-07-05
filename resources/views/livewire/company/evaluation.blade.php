@@ -1,10 +1,4 @@
 <div>
-    @if (session('message'))
-        <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-            {{ session('message') }}
-        </div>
-    @endif
-
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {{-- Evaluation Form --}}
         <div class="bg-white rounded-lg shadow p-6">
@@ -13,12 +7,16 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Personnel</label>
                     <select wire:model="selectedPersonnelId"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500"
+                            @if ($personnelList->isEmpty()) disabled @endif>
                         <option value="">Select Personnel</option>
                         @foreach ($personnelList as $e)
                             <option value="{{ $e->id }}">{{ $e->user->name }} ({{ $e->nss_number }})</option>
                         @endforeach
                     </select>
+                    @if ($personnelList->isEmpty())
+                        <p class="text-amber-600 text-xs mt-1">No validated personnel available. Personnel must be validated before they can be evaluated.</p>
+                    @endif
                     @error('selectedPersonnelId') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
@@ -98,10 +96,10 @@
                 </div>
 
                 <div class="flex justify-end">
-                    <button type="submit"
+                    <x-loading-button target="save" loading="Saving evaluation..."
                             class="bg-stormy-600 text-white px-6 py-2 rounded-md hover:bg-stormy-700 text-sm font-medium">
                         Save Evaluation
-                    </button>
+                    </x-loading-button>
                 </div>
             </form>
         </div>

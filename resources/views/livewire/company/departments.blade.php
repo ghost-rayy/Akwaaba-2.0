@@ -34,9 +34,10 @@
                     </select>
                 </div>
                 <div class="flex space-x-3">
-                    <button type="submit" class="bg-stormy-600 text-white px-4 py-2 rounded-md hover:bg-stormy-700 text-sm">
+                    <x-loading-button target="save" loading="{{ $departmentId ? 'Updating...' : 'Saving...' }}"
+                            class="bg-stormy-600 text-white px-4 py-2 rounded-md hover:bg-stormy-700 text-sm">
                         {{ $departmentId ? 'Update' : 'Save' }}
-                    </button>
+                    </x-loading-button>
                     <button type="button" wire:click="cancel" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 text-sm">
                         Cancel
                     </button>
@@ -82,7 +83,10 @@
                 <p class="text-gray-500 mb-6">Are you sure you want to delete this department? This action cannot be undone.</p>
                 <div class="flex justify-end space-x-3">
                     <button wire:click="$set('showDeleteModal', false)" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm">Cancel</button>
-                    <button wire:click="delete" class="bg-red-600 text-white px-4 py-2 rounded-md text-sm">Delete</button>
+                    <x-loading-button type="button" target="delete" loading="Deleting..." wire:click="delete"
+                            class="bg-red-600 text-white px-4 py-2 rounded-md text-sm">
+                        Delete
+                    </x-loading-button>
                 </div>
             </div>
         </div>

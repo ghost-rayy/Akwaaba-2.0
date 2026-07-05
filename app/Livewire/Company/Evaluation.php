@@ -4,10 +4,12 @@ namespace App\Livewire\Company;
 
 use App\Models\Enrollment;
 use App\Models\Evaluation as EvaluationModel;
+use App\Support\DispatchesToast;
 use Livewire\Component;
 
 class Evaluation extends Component
 {
+    use DispatchesToast;
     public $selectedPersonnelId = '';
     public $periodStart;
     public $periodEnd;
@@ -45,6 +47,7 @@ class Evaluation extends Component
 
         $enrollment = Enrollment::with('user')
             ->where('company_id', auth()->user()->company_id)
+            ->whereIn('status', ['validated', 'active'])
             ->findOrFail($this->selectedPersonnelId);
 
         $overall = round(($this->punctualityScore + $this->performanceScore + $this->attitudeScore + $this->teamworkScore) / 4, 2);
@@ -67,7 +70,7 @@ class Evaluation extends Component
         $this->reset(['selectedPersonnelId', 'punctualityScore', 'performanceScore', 'attitudeScore', 'teamworkScore', 'comments', 'recommendation']);
         $this->mount();
 
-        session()->flash('message', 'Evaluation saved successfully. Overall score: ' . $overall . '/5');
+        $this->toastSuccess('Evaluation saved successfully. Overall score: '.$overall.'/5');
     }
 
     public function render()
@@ -76,7 +79,7 @@ class Evaluation extends Component
 
         return view('livewire.company.evaluation', [
             'personnelList' => Enrollment::where('company_id', $company->id)
-                ->whereIn('status', ['endorsed', 'active'])
+                ->whereIn('status', ['validated', 'active'])
                 ->with('user')
                 ->latest()
                 ->get(),

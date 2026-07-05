@@ -1,16 +1,4 @@
 <div>
-    @if (session('message'))
-        <div class="alert-dismiss mb-6 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            {{ session('message') }}
-        </div>
-    @endif
-    @if (session('error'))
-        <div class="alert-dismiss mb-6 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl flex items-center gap-2">
-            <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
-            {{ session('error') }}
-        </div>
-    @endif
     @if ($errors->any())
         <div class="mb-4 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl">
             <ul class="list-disc pl-4 text-sm font-semibold">
@@ -91,15 +79,31 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
-                                <button wire:click="confirmEndorse({{ $enrollment->id }})"
-                                        class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg hover:bg-emerald-100 text-xs font-medium ring-1 ring-emerald-600/20 transition-colors">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    Endorse
+                                <button wire:click="endorsePersonnel({{ $enrollment->id }})"
+                                        wire:loading.attr="disabled"
+                                        wire:target="endorsePersonnel({{ $enrollment->id }})"
+                                        class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg hover:bg-emerald-100 text-xs font-medium ring-1 ring-emerald-600/20 transition-colors disabled:opacity-70 disabled:cursor-not-allowed">
+                                    <span wire:loading.remove wire:target="endorsePersonnel({{ $enrollment->id }})" class="inline-flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        Endorse
+                                    </span>
+                                    <span wire:loading wire:target="endorsePersonnel({{ $enrollment->id }})" style="display: none;" class="inline-flex items-center gap-1">
+                                        <x-loading-spinner class="h-3.5 w-3.5" />
+                                        Endorsing...
+                                    </span>
                                 </button>
                                 <button wire:click="confirmReject({{ $enrollment->id }})"
-                                        class="inline-flex items-center gap-1 bg-red-50 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-100 text-xs font-medium ring-1 ring-red-600/20 transition-colors">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                    Reject
+                                        wire:loading.attr="disabled"
+                                        wire:target="confirmReject({{ $enrollment->id }})"
+                                        class="inline-flex items-center gap-1 bg-red-50 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-100 text-xs font-medium ring-1 ring-red-600/20 transition-colors disabled:opacity-70 disabled:cursor-not-allowed">
+                                    <span wire:loading.remove wire:target="confirmReject({{ $enrollment->id }})" class="inline-flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        Reject
+                                    </span>
+                                    <span wire:loading wire:target="confirmReject({{ $enrollment->id }})" style="display: none;" class="inline-flex items-center gap-1">
+                                        <x-loading-spinner class="h-3.5 w-3.5" />
+                                        Opening...
+                                    </span>
                                 </button>
                             </td>
                         </tr>
@@ -173,103 +177,6 @@
         </div>
     @endif
 
-    {{-- Endorse Modal --}}
-    @if ($confirmingEndorsement)
-        <div class="fixed inset-0 bg-gray-500/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg mx-4">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900">Endorse Posting Letter</h3>
-                        <p class="text-sm text-gray-500">Configure endorsement signature & stamps for letter generation.</p>
-                    </div>
-                </div>
-
-                @if (session('error'))
-                    <div class="mb-4 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl font-semibold text-sm">
-                        {{ session('error') }}
-                    </div>
-                @endif
-
-                @if ($errors->any())
-                    <div class="mb-4 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl">
-                        <ul class="list-disc pl-4 text-sm font-semibold">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                <form onsubmit="return false;" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Select Template</label>
-                        <select wire:model="selectedTemplateId"
-                                class="w-full rounded-xl border-gray-300 shadow-sm focus:ring-2 focus:ring-stormy-500 focus:border-stormy-500 text-sm">
-                            <option value="">-- Choose Template --</option>
-                            @foreach ($templates as $t)
-                                <option value="{{ $t->id }}">
-                                    {{ $t->name }} ({{ $t->fieldMappings->count() }} fields)
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('selectedTemplateId') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        @if ($templates->isEmpty())
-                            <p class="text-xs text-amber-600 mt-1">No active templates. Upload and configure one in Settings first.</p>
-                        @endif
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Posting Date</label>
-                            <input type="date" wire:model="postingDate"
-                                   class="w-full rounded-xl border-gray-300 shadow-sm focus:ring-2 focus:ring-stormy-500 focus:border-stormy-500 text-sm">
-                            @error('postingDate') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Start Date</label>
-                            <input type="date" wire:model="startDate"
-                                   class="w-full rounded-xl border-gray-300 shadow-sm focus:ring-2 focus:ring-stormy-500 focus:border-stormy-500 text-sm">
-                            @error('startDate') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">End Date</label>
-                            <input type="date" wire:model="endDate"
-                                   class="w-full rounded-xl border-gray-300 shadow-sm focus:ring-2 focus:ring-stormy-500 focus:border-stormy-500 text-sm">
-                            @error('endDate') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Signature (optional)</label>
-                            <input type="file" wire:model="signature" accept=".png,.jpg,.jpeg"
-                                   class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Stamp (optional)</label>
-                            <input type="file" wire:model="stamp" accept=".png,.jpg,.jpeg"
-                                   class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100">
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end gap-3 mt-6 border-t border-gray-100 pt-4">
-                        <button type="button" wire:click="$set('confirmingEndorsement', false)"
-                                class="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
-                            Cancel
-                        </button>
-                        <button type="button" wire:click="endorseSingle"
-                                class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-stormy-600 to-stormy-700 hover:from-stormy-700 hover:to-stormy-800 rounded-xl shadow-md transition-all">
-                            Endorse Letter
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    @endif
-
     {{-- Reject Modal --}}
     @if ($confirmingRejection)
         <div class="fixed inset-0 bg-gray-500/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -291,10 +198,10 @@
                             class="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
                         Cancel
                     </button>
-                    <button wire:click="reject"
+                    <x-loading-button type="button" target="reject" loading="Rejecting..." wire:click="reject"
                             class="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors">
                         Confirm Rejection
-                    </button>
+                    </x-loading-button>
                 </div>
             </div>
         </div>
@@ -342,11 +249,11 @@
                         $targetLetter = \App\Models\EndorsedLetter::find($viewingValidatedLetterId);
                     @endphp
                     @if ($targetLetter && !$targetLetter->validated_by)
-                        <button wire:click="validateLetter({{ $viewingValidatedLetterId }})"
+                        <x-loading-button type="button" target="validateLetter" loading="Validating..." wire:click="validateLetter({{ $viewingValidatedLetterId }})"
                                 class="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <svg wire:loading.remove wire:target="validateLetter" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             Validate Letter
-                        </button>
+                        </x-loading-button>
                     @endif
                 </div>
             </div>

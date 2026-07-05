@@ -3,12 +3,13 @@
 namespace App\Livewire\Personnel;
 
 use App\Models\EndorsedLetter;
+use App\Support\DispatchesToast;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
 class Documents extends Component
 {
-    use WithFileUploads;
+    use DispatchesToast, WithFileUploads;
 
     public $validatedFile;
 
@@ -30,7 +31,7 @@ class Documents extends Component
 
         $this->reset(['validatedFile']);
 
-        session()->flash('success', 'Validated endorsed posting letter uploaded successfully.');
+        $this->toastSuccess('Validated endorsed posting letter uploaded successfully.');
     }
 
     public function render()

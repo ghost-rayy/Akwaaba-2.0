@@ -5,6 +5,7 @@ namespace App\Livewire\Company;
 use App\Models\EndorsedLetter;
 use App\Models\Enrollment;
 use App\Models\LetterTemplate;
+use App\Support\DispatchesToast;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -12,7 +13,7 @@ use Livewire\WithFileUploads;
 
 class EndorseLetters extends Component
 {
-    use WithFileUploads;
+    use DispatchesToast, WithFileUploads;
 
     public $selectedTemplateId = '';
     public $selectedPersonnel = [];
@@ -22,14 +23,10 @@ class EndorseLetters extends Component
     public $selectedPersonnelId = null;
     public $rejectionReason = '';
     public $confirmingRejection = false;
-    public $confirmingEndorsement = false;
     public $viewingLetterId = null;
     public $viewingLetterBase64 = '';
     public $viewingValidatedLetterId = null;
     public $viewingValidatedLetterBase64 = '';
-    public $startDate;
-    public $endDate;
-    public $postingDate;
 
     protected function rules()
     {
@@ -79,13 +76,13 @@ class EndorseLetters extends Component
                     'endorsement_date' => now(),
                 ]);
             } catch (\Exception $e) {
-                session()->flash('error', 'Failed to generate PDF overlay for ' . $enrollment->user->name . ': ' . $e->getMessage());
+                $this->toastError('Failed to generate PDF overlay for '.$enrollment->user->name.': '.$e->getMessage());
                 return;
             }
         }
 
         $this->reset(['selectedPersonnel', 'signature', 'stamp', 'selectedTemplateId']);
-        session()->flash('message', 'Letters endorsed successfully for ' . count($this->selectedPersonnel) . ' personnel.');
+        $this->toastSuccess('Letters endorsed successfully for '.count($this->selectedPersonnel).' personnel.');
     }
 
     protected function buildFieldData($enrollment, $company, $template)
@@ -189,7 +186,7 @@ class EndorseLetters extends Component
 
         $this->closeValidatedViewer();
 
-        session()->flash('message', 'Personnel letter validated successfully.');
+        $this->toastSuccess('Personnel letter validated successfully.');
     }
 
     public function confirmReject($enrollmentId)
@@ -217,57 +214,56 @@ class EndorseLetters extends Component
         $this->selectedPersonnelId = null;
         $this->rejectionReason = '';
 
-        session()->flash('message', 'Personnel rejected.');
+        $this->toastSuccess('Personnel rejected.');
     }
 
-    public function confirmEndorse($enrollmentId)
+    public function endorsePersonnel($enrollmentId)
     {
-        $this->selectedPersonnelId = $enrollmentId;
-        $enrollment = Enrollment::findOrFail($enrollmentId);
-        $this->startDate = $enrollment->start_date?->format('Y-m-d') ?? now()->format('Y-m-d');
-        $this->endDate = $enrollment->end_date?->format('Y-m-d') ?? now()->addYear()->format('Y-m-d');
-        $this->postingDate = now()->format('Y-m-d');
-        $this->selectedTemplateId = '';
-        $this->confirmingEndorsement = true;
-    }
-
-    public function endorseSingle()
-    {
-        $this->validate([
-            'selectedTemplateId' => 'required|exists:letter_templates,id',
-            'signature' => 'nullable|file|mimes:png,jpg,jpeg|max:2048',
-            'stamp' => 'nullable|file|mimes:png,jpg,jpeg|max:2048',
-            'startDate' => 'required|date',
-            'endDate' => 'required|date|after_or_equal:startDate',
-            'postingDate' => 'required|date',
-        ]);
-
         $user = auth()->user();
         $company = $user->company;
-        $template = LetterTemplate::with('fieldMappings')->findOrFail($this->selectedTemplateId);
 
-        $signaturePath = $this->signature
-            ? $this->signature->store('signatures/' . $company->id, 'public')
-            : $company->digital_signature_path;
-        $stampPath = $this->stamp
-            ? $this->stamp->store('stamps/' . $company->id, 'public')
-            : $company->stamp_path;
+        $template = LetterTemplate::where('company_id', $company->id)
+            ->where('type', 'posting_letter')
+            ->where('is_active', true)
+            ->with('fieldMappings')
+            ->first();
+
+        if (! $template) {
+            $this->toastError('No active posting letter template. Upload and configure field mappings in Settings first.');
+
+            return;
+        }
+
+        if ($template->fieldMappings->isEmpty()) {
+            $this->toastError('Posting letter template has no field mappings. Configure fields in the Letters tab first.');
+
+            return;
+        }
 
         $enrollment = Enrollment::with('user.personalInfo', 'user.educationInfo')
             ->where('company_id', $company->id)
             ->where('status', 'shortlisted')
-            ->findOrFail($this->selectedPersonnelId);
+            ->findOrFail($enrollmentId);
 
-        // Update database with user chosen dates first
+        $postingDate = now();
+        $startDate = $enrollment->start_date ?? now();
+        $endDate = $enrollment->end_date ?? now()->addYear();
+
         $enrollment->update([
             'status' => 'endorsed',
-            'endorsement_date' => $this->postingDate ? \Carbon\Carbon::parse($this->postingDate) : now(),
-            'start_date' => $this->startDate ? \Carbon\Carbon::parse($this->startDate) : null,
-            'end_date' => $this->endDate ? \Carbon\Carbon::parse($this->endDate) : null,
+            'endorsement_date' => $postingDate,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
         ]);
 
         try {
-            $filePath = $this->generateEndorsedPdf($enrollment, $company, $template, $signaturePath, $stampPath);
+            $filePath = $this->generateEndorsedPdf(
+                $enrollment,
+                $company,
+                $template,
+                $company->digital_signature_path,
+                $company->stamp_path,
+            );
 
             EndorsedLetter::create([
                 'enrollment_id' => $enrollment->id,
@@ -277,15 +273,17 @@ class EndorseLetters extends Component
                 'status' => 'endorsed',
             ]);
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to generate PDF overlay: ' . $e->getMessage());
+            $enrollment->update([
+                'status' => 'shortlisted',
+                'endorsement_date' => null,
+            ]);
+
+            $this->toastError('Failed to generate endorsed letter for '.$enrollment->user->name.': '.$e->getMessage());
+
             return;
         }
 
-        $this->confirmingEndorsement = false;
-        $this->selectedPersonnelId = null;
-        $this->reset(['signature', 'stamp', 'selectedTemplateId']);
-
-        session()->flash('message', 'Letter endorsed successfully.');
+        $this->toastSuccess($enrollment->user->name."'s letter endorsed successfully.");
     }
 
     protected function generateEndorsedPdf($enrollment, $company, $template, $signaturePath, $stampPath)
@@ -367,10 +365,6 @@ class EndorseLetters extends Component
         $company = auth()->user()->company;
 
         return view('livewire.company.endorse-letters', [
-            'templates' => LetterTemplate::where('company_id', $company->id)
-                ->where('is_active', true)
-                ->with('fieldMappings')
-                ->get(),
             'shortlistedPersonnel' => Enrollment::where('company_id', $company->id)
                 ->where('status', 'shortlisted')
                 ->with(['user', 'user.personalInfo', 'department'])

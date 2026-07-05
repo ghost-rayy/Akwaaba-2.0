@@ -30,9 +30,9 @@ new #[Layout('layouts.guest')] class extends Component
 
         event(new Registered($user = User::create($validated)));
 
-        Auth::login($user);
+        Auth::guard('personnel')->login($user);
 
-        $this->redirect(route('dashboard', absolute: false), navigate: true);
+        $this->redirect(route('personnel.dashboard', absolute: false), navigate: true);
     }
 }; ?>
 
@@ -80,7 +80,7 @@ new #[Layout('layouts.guest')] class extends Component
                 {{ __('Already registered?') }}
             </a>
 
-            <x-primary-button class="ms-4">
+            <x-primary-button class="ms-4" target="register" loading="Registering...">
                 {{ __('Register') }}
             </x-primary-button>
         </div>

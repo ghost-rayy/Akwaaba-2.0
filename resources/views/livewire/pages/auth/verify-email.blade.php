@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Actions\Logout;
+use App\Support\GuardSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
@@ -14,7 +15,7 @@ new #[Layout('layouts.guest')] class extends Component
     public function sendVerification(): void
     {
         if (Auth::user()->hasVerifiedEmail()) {
-            $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+            $this->redirectIntended(default: route(GuardSession::dashboardRoute(), absolute: false), navigate: true);
 
             return;
         }
@@ -29,9 +30,11 @@ new #[Layout('layouts.guest')] class extends Component
      */
     public function logout(Logout $logout): void
     {
-        $logout();
+        $user = Auth::user();
+        $guard = Auth::getDefaultDriver();
+        $logout($guard);
 
-        $this->redirect('/', navigate: true);
+        $this->redirect(route(GuardSession::loginRouteForUser($user), absolute: false), navigate: true);
     }
 }; ?>
 
@@ -47,7 +50,7 @@ new #[Layout('layouts.guest')] class extends Component
     @endif
 
     <div class="mt-4 flex items-center justify-between">
-        <x-primary-button wire:click="sendVerification">
+        <x-primary-button wire:click="sendVerification" target="sendVerification" loading="Sending...">
             {{ __('Resend Verification Email') }}
         </x-primary-button>
 

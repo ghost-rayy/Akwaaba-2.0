@@ -90,8 +90,12 @@ new class extends Component
                     <p class="text-sm mt-2 text-gray-800">
                         {{ __('Your email address is unverified.') }}
 
-                        <button wire:click.prevent="sendVerification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stormy-500">
-                            {{ __('Click here to re-send the verification email.') }}
+                        <button wire:click.prevent="sendVerification" wire:loading.attr="disabled" wire:target="sendVerification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stormy-500 disabled:opacity-70 inline-flex items-center gap-1.5">
+                            <span wire:loading.remove wire:target="sendVerification">{{ __('Click here to re-send the verification email.') }}</span>
+                            <span wire:loading wire:target="sendVerification" class="inline-flex items-center gap-1.5">
+                                <x-loading-spinner class="h-3 w-3" />
+                                {{ __('Sending...') }}
+                            </span>
                         </button>
                     </p>
 
@@ -105,7 +109,7 @@ new class extends Component
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
+            <x-primary-button target="updateProfileInformation" loading="Saving...">{{ __('Save') }}</x-primary-button>
 
             <x-action-message class="me-3" on="profile-updated">
                 {{ __('Saved.') }}

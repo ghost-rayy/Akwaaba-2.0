@@ -13,9 +13,12 @@ class ProfileTest extends TestCase
 
     public function test_profile_page_is_displayed(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'role' => 'nss_personnel',
+            'must_change_password' => false,
+        ]);
 
-        $response = $this->actingAs($user)->get('/profile');
+        $response = $this->actingAs($user, 'personnel')->get('/personnel/profile');
 
         $response
             ->assertOk()
@@ -26,9 +29,12 @@ class ProfileTest extends TestCase
 
     public function test_profile_information_can_be_updated(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'role' => 'nss_personnel',
+            'must_change_password' => false,
+        ]);
 
-        $this->actingAs($user);
+        $this->actingAs($user, 'personnel');
 
         $component = Volt::test('profile.update-profile-information-form')
             ->set('name', 'Test User')
@@ -48,9 +54,12 @@ class ProfileTest extends TestCase
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'role' => 'nss_personnel',
+            'must_change_password' => false,
+        ]);
 
-        $this->actingAs($user);
+        $this->actingAs($user, 'personnel');
 
         $component = Volt::test('profile.update-profile-information-form')
             ->set('name', 'Test User')
@@ -66,9 +75,12 @@ class ProfileTest extends TestCase
 
     public function test_user_can_delete_their_account(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'role' => 'nss_personnel',
+            'must_change_password' => false,
+        ]);
 
-        $this->actingAs($user);
+        $this->actingAs($user, 'personnel');
 
         $component = Volt::test('profile.delete-user-form')
             ->set('password', 'password')
@@ -76,17 +88,20 @@ class ProfileTest extends TestCase
 
         $component
             ->assertHasNoErrors()
-            ->assertRedirect('/');
+            ->assertRedirect(route('login', absolute: false));
 
-        $this->assertGuest();
+        $this->assertGuest('personnel');
         $this->assertNull($user->fresh());
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'role' => 'nss_personnel',
+            'must_change_password' => false,
+        ]);
 
-        $this->actingAs($user);
+        $this->actingAs($user, 'personnel');
 
         $component = Volt::test('profile.delete-user-form')
             ->set('password', 'wrong-password')

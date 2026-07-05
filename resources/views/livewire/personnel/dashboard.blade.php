@@ -1,36 +1,4 @@
 <div>
-    {{-- Success Message --}}
-    @if ($successMessage)
-        <div class="alert-dismiss mb-6 bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-xl shadow-sm animate-fade-in">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm font-semibold text-emerald-800">{{ $successMessage }}</p>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    {{-- Error message from middleware --}}
-    @if (session('error'))
-        <div class="alert-dismiss mb-6 bg-rose-50 border-l-4 border-rose-500 p-4 rounded-xl shadow-sm">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-rose-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm font-semibold text-rose-800">{{ session('error') }}</p>
-                </div>
-            </div>
-        </div>
-    @endif
-
     {{-- STEP 0: Change Password --}}
     @if ($step === 0)
         <div class="max-w-md mx-auto">
@@ -61,10 +29,10 @@
                                    class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-stormy-500 focus:border-stormy-500 text-sm transition-all"
                                    placeholder="••••••••">
                         </div>
-                        <button type="submit"
+                        <x-loading-button target="changePassword" loading="Processing..."
                                 class="w-full bg-gradient-to-r from-stormy-600 to-stormy-700 hover:from-stormy-700 hover:to-stormy-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition-all duration-200 mt-2">
                             Change & Setup Profile
-                        </button>
+                        </x-loading-button>
                     </form>
                 </div>
             </div>
@@ -84,7 +52,7 @@
                     </div>
 
                     {{-- Stepper UI --}}
-                    <div class="relative flex items-center justify-between mt-6 max-w-sm">
+                    <div class="relative flex items-center justify-between mt-6 w-full">
                         <div class="absolute inset-0 flex items-center" aria-hidden="true">
                             <div class="h-0.5 w-full bg-gray-100"></div>
                         </div>
@@ -137,22 +105,16 @@
                             @error('region_of_residence') <p class="text-rose-500 text-xs mt-1 font-semibold">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">NSS Year</label>
-                            <select wire:model="nss_year"
-                                    class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-stormy-500 focus:border-stormy-500 text-sm transition-all bg-white">
-                                <option value="">Select Year</option>
-                                @foreach ($years as $year)
-                                    <option value="{{ $year }}">{{ $year }}</option>
-                                @endforeach
-                            </select>
-                            @error('nss_year') <p class="text-rose-500 text-xs mt-1 font-semibold">{{ $message }}</p> @enderror
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">NSS Year (Locked)</label>
+                            <input type="text" wire:model="nss_year" readonly
+                                   class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 text-sm cursor-not-allowed">
                         </div>
                     </div>
                     <div class="flex justify-end pt-4">
-                        <button type="submit"
+                        <x-loading-button target="saveStep1" loading="Saving..."
                                 class="bg-gradient-to-r from-stormy-600 to-stormy-700 hover:from-stormy-700 hover:to-stormy-800 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md transition-all">
                             Save & Continue &rarr;
-                        </button>
+                        </x-loading-button>
                     </div>
                 </form>
             </div>
@@ -172,7 +134,7 @@
                     </div>
 
                     {{-- Stepper UI --}}
-                    <div class="relative flex items-center justify-between mt-6 max-w-sm">
+                    <div class="relative flex items-center justify-between mt-6 w-full">
                         <div class="absolute inset-0 flex items-center" aria-hidden="true">
                             <div class="h-0.5 w-full bg-gradient-to-r from-emerald-500 to-gray-100"></div>
                         </div>
@@ -185,11 +147,76 @@
                 <form wire:submit="saveStep2" class="space-y-5">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div class="md:col-span-2">
-                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">University / Institution</label>
-                            <input type="text" wire:model="university"
-                                   class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-stormy-500 focus:border-stormy-500 text-sm transition-all"
-                                   placeholder="e.g. University of Ghana">
-                            @error('university') <p class="text-rose-500 text-xs mt-1 font-semibold">{{ $message }}</p> @enderror
+                            <div
+                                x-data="{
+                                    query: @entangle('university').live,
+                                    open: false,
+                                    all: @js($universities),
+                                    get filtered() {
+                                        const q = (this.query || '').toLowerCase().trim();
+                                        if (q.length < 1) return [];
+                                        return this.all.filter(u => u.toLowerCase().includes(q)).slice(0, 20);
+                                    },
+                                    get showDropdown() {
+                                        return this.open && (this.query || '').trim().length >= 1;
+                                    },
+                                    select(name) {
+                                        this.query = name;
+                                        this.open = false;
+                                        $wire.set('universityIsOther', false);
+                                    },
+                                    selectOther() {
+                                        this.query = '';
+                                        this.open = false;
+                                        $wire.set('universityIsOther', true);
+                                        this.$nextTick(() => this.$refs.input?.focus());
+                                    },
+                                }"
+                                @click.outside="open = false"
+                                class="relative"
+                            >
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">University / Institution</label>
+                                <input
+                                    x-ref="input"
+                                    type="text"
+                                    x-model="query"
+                                    @input="open = true; $wire.set('universityIsOther', false)"
+                                    @focus="open = true"
+                                    autocomplete="off"
+                                    placeholder="Start typing to search..."
+                                    class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-stormy-500 focus:border-stormy-500 text-sm transition-all"
+                                />
+
+                                <div
+                                    x-show="showDropdown"
+                                    x-transition
+                                    class="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg"
+                                    style="display: none;"
+                                >
+                                    <template x-for="item in filtered" :key="item">
+                                        <button
+                                            type="button"
+                                            @mousedown.prevent="select(item)"
+                                            class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-stormy-50 hover:text-stormy-700 transition-colors"
+                                            x-text="item"
+                                        ></button>
+                                    </template>
+
+                                    <p x-show="filtered.length === 0" class="px-4 py-2.5 text-sm text-gray-400 italic">
+                                        No matching institutions
+                                    </p>
+
+                                    <button
+                                        type="button"
+                                        @mousedown.prevent="selectOther()"
+                                        class="w-full text-left px-4 py-2.5 text-sm border-t border-gray-100 font-medium text-stormy-600 hover:bg-stormy-50 transition-colors"
+                                    >
+                                        Other (enter manually)
+                                    </button>
+                                </div>
+
+                                @error('university') <p class="text-rose-500 text-xs mt-1 font-semibold">{{ $message }}</p> @enderror
+                            </div>
                         </div>
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">City of School</label>
@@ -229,10 +256,10 @@
                         </div>
                     </div>
                     <div class="flex justify-end pt-4">
-                        <button type="submit"
+                        <x-loading-button target="saveStep2" loading="Saving..."
                                 class="bg-gradient-to-r from-stormy-600 to-stormy-700 hover:from-stormy-700 hover:to-stormy-800 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md transition-all">
                             Save & Continue &rarr;
-                        </button>
+                        </x-loading-button>
                     </div>
                 </form>
             </div>
@@ -252,7 +279,7 @@
                     </div>
 
                     {{-- Stepper UI --}}
-                    <div class="relative flex items-center justify-between mt-6 max-w-sm">
+                    <div class="relative flex items-center justify-between mt-6 w-full">
                         <div class="absolute inset-0 flex items-center" aria-hidden="true">
                             <div class="h-0.5 w-full bg-emerald-500"></div>
                         </div>
@@ -263,33 +290,156 @@
                 </div>
 
                 <form wire:submit="saveStep3" class="space-y-6">
-                    <div class="bg-gray-50 rounded-2xl p-5 border border-dashed border-gray-300">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Posting Letter (PDF only, max 5MB)</label>
-                        <input type="file" wire:model="posting_letter" accept=".pdf"
-                               class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100 transition-colors">
-                        @error('posting_letter') <p class="text-rose-500 text-xs mt-1.5 font-semibold">{{ $message }}</p> @enderror
-                        <div wire:loading wire:target="posting_letter" class="flex items-center gap-2 text-stormy-600 text-sm mt-2">
+                    <div
+                        x-data="{
+                            uploading: false,
+                            error: null,
+                            async upload(event) {
+                                const file = event.target.files[0];
+                                if (!file) return;
+                                this.uploading = true;
+                                this.error = null;
+                                $wire.set('posting_letter_path', null);
+                                $wire.set('posting_letter_name', null);
+                                const formData = new FormData();
+                                formData.append('file', file);
+                                try {
+                                    const response = await fetch('{{ route('personnel.upload.posting-letter') }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                            'Accept': 'application/json',
+                                        },
+                                        body: formData,
+                                        credentials: 'same-origin',
+                                    });
+                                    const data = await response.json();
+                                    if (! response.ok) {
+                                        const message = data.errors?.file?.[0] ?? data.message ?? (response.status === 419 ? 'Session expired. Please refresh the page.' : 'Upload failed');
+                                        throw new Error(message);
+                                    }
+                                    $wire.set('posting_letter_path', data.path);
+                                    $wire.set('posting_letter_name', data.name);
+                                } catch (e) {
+                                    this.error = e.message || 'Upload failed. Please try again.';
+                                    event.target.value = '';
+                                } finally {
+                                    this.uploading = false;
+                                }
+                            },
+                        }"
+                        @class([
+                            'rounded-2xl p-5 border-2 border-dashed transition-all duration-300',
+                            'bg-emerald-50/80 border-emerald-400 shadow-sm shadow-emerald-100' => $posting_letter_path && ! $errors->has('posting_letter_path'),
+                            'bg-gray-50 border-gray-300' => ! $posting_letter_path && ! $errors->has('posting_letter_path'),
+                            'bg-rose-50 border-rose-300' => $errors->has('posting_letter_path'),
+                        ])
+                    >
+                        <label @class([
+                            'block text-sm font-semibold mb-2 transition-colors',
+                            'text-emerald-800' => $posting_letter_path && ! $errors->has('posting_letter_path'),
+                            'text-gray-700' => ! $posting_letter_path || $errors->has('posting_letter_path'),
+                        ])>
+                            Posting Letter (PDF only, max 5MB)<span class="text-rose-500 ml-0.5">*</span>
+                        </label>
+                        <input type="file" accept=".pdf,application/pdf" @change="upload($event)"
+                               @class([
+                                   'block w-full text-sm transition-colors file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold',
+                                   'text-emerald-700 file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200' => $posting_letter_path && ! $errors->has('posting_letter_path'),
+                                   'text-gray-500 file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100' => ! $posting_letter_path || $errors->has('posting_letter_path'),
+                               ])>
+                        @error('posting_letter_path') <p class="text-rose-500 text-xs mt-1.5 font-semibold">{{ $message }}</p> @enderror
+                        <p x-show="error" x-text="error" class="text-rose-500 text-xs mt-1.5 font-semibold" style="display: none;"></p>
+                        <div x-show="uploading" class="flex items-center gap-2 text-stormy-600 text-sm mt-2">
                             <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             Uploading posting letter...
                         </div>
+                        @if ($posting_letter_path)
+                            <div x-show="!uploading" class="flex items-center gap-2 text-emerald-700 text-sm mt-2 font-medium">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></path></svg>
+                                <span>{{ $posting_letter_name }} — ready to submit</span>
+                            </div>
+                        @endif
                     </div>
 
-                    <div class="bg-gray-50 rounded-2xl p-5 border border-dashed border-gray-300">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Passport Photo (Optional, JPG/PNG, max 2MB)</label>
-                        <input type="file" wire:model="passport_photo" accept=".jpg,.jpeg,.png"
-                               class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100 transition-colors">
-                        @error('passport_photo') <p class="text-rose-500 text-xs mt-1.5 font-semibold">{{ $message }}</p> @enderror
-                        <div wire:loading wire:target="passport_photo" class="flex items-center gap-2 text-stormy-600 text-sm mt-2">
+                    <div
+                        x-data="{
+                            uploading: false,
+                            error: null,
+                            async upload(event) {
+                                const file = event.target.files[0];
+                                if (!file) return;
+                                this.uploading = true;
+                                this.error = null;
+                                $wire.set('passport_photo_path', null);
+                                $wire.set('passport_photo_name', null);
+                                const formData = new FormData();
+                                formData.append('file', file);
+                                try {
+                                    const response = await fetch('{{ route('personnel.upload.passport-photo') }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                            'Accept': 'application/json',
+                                        },
+                                        body: formData,
+                                        credentials: 'same-origin',
+                                    });
+                                    const data = await response.json();
+                                    if (! response.ok) {
+                                        const message = data.errors?.file?.[0] ?? data.message ?? (response.status === 419 ? 'Session expired. Please refresh the page.' : 'Upload failed');
+                                        throw new Error(message);
+                                    }
+                                    $wire.set('passport_photo_path', data.path);
+                                    $wire.set('passport_photo_name', data.name);
+                                } catch (e) {
+                                    this.error = e.message || 'Upload failed. Please try again.';
+                                    event.target.value = '';
+                                } finally {
+                                    this.uploading = false;
+                                }
+                            },
+                        }"
+                        @class([
+                            'rounded-2xl p-5 border-2 border-dashed transition-all duration-300',
+                            'bg-emerald-50/80 border-emerald-400 shadow-sm shadow-emerald-100' => $passport_photo_path && ! $errors->has('passport_photo_path'),
+                            'bg-gray-50 border-gray-300' => ! $passport_photo_path && ! $errors->has('passport_photo_path'),
+                            'bg-rose-50 border-rose-300' => $errors->has('passport_photo_path'),
+                        ])
+                    >
+                        <label @class([
+                            'block text-sm font-semibold mb-2 transition-colors',
+                            'text-emerald-800' => $passport_photo_path && ! $errors->has('passport_photo_path'),
+                            'text-gray-700' => ! $passport_photo_path || $errors->has('passport_photo_path'),
+                        ])>
+                            Passport Photo (Optional, JPG/PNG, max 2MB)
+                        </label>
+                        <input type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" @change="upload($event)"
+                               @class([
+                                   'block w-full text-sm transition-colors file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold',
+                                   'text-emerald-700 file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200' => $passport_photo_path && ! $errors->has('passport_photo_path'),
+                                   'text-gray-500 file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100' => ! $passport_photo_path || $errors->has('passport_photo_path'),
+                               ])>
+                        @error('passport_photo_path') <p class="text-rose-500 text-xs mt-1.5 font-semibold">{{ $message }}</p> @enderror
+                        <p x-show="error" x-text="error" class="text-rose-500 text-xs mt-1.5 font-semibold" style="display: none;"></p>
+                        <div x-show="uploading" class="flex items-center gap-2 text-stormy-600 text-sm mt-2">
                             <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             Uploading photo...
                         </div>
+                        @if ($passport_photo_path)
+                            <div x-show="!uploading" class="flex items-center gap-2 text-emerald-700 text-sm mt-2 font-medium">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></path></svg>
+                                <span>{{ $passport_photo_name }} — ready to submit</span>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="flex justify-end pt-4">
-                        <button type="submit"
-                                class="bg-gradient-to-r from-stormy-600 to-stormy-700 hover:from-stormy-700 hover:to-stormy-800 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md transition-all">
+                        <x-loading-button target="saveStep3" loading="Submitting..."
+                                :disabled="! $posting_letter_path"
+                                class="bg-gradient-to-r from-stormy-600 to-stormy-700 hover:from-stormy-700 hover:to-stormy-800 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                             Submit & Finalize
-                        </button>
+                        </x-loading-button>
                     </div>
                 </form>
             </div>
@@ -300,7 +450,7 @@
         <div class="space-y-6">
             {{-- Status Banner --}}
             @if ($enrollmentStatus === 'pending_review')
-                <div class="alert-dismiss bg-amber-50 border-l-4 border-amber-500 text-amber-900 p-5 rounded-2xl shadow-sm flex items-start gap-4">
+                <div class="status-banner bg-amber-50 border-l-4 border-amber-500 text-amber-900 p-5 rounded-2xl shadow-sm flex items-start gap-4">
                     <div class="p-2 bg-amber-100 rounded-xl text-amber-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
@@ -310,7 +460,7 @@
                     </div>
                 </div>
             @elseif ($enrollmentStatus === 'shortlisted')
-                <div class="alert-dismiss bg-emerald-50 border-l-4 border-emerald-500 text-emerald-950 p-5 rounded-2xl shadow-sm flex items-start gap-4">
+                <div class="status-banner bg-emerald-50 border-l-4 border-emerald-500 text-emerald-950 p-5 rounded-2xl shadow-sm flex items-start gap-4">
                     <div class="p-2 bg-emerald-100 rounded-xl text-emerald-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
@@ -320,7 +470,7 @@
                     </div>
                 </div>
             @elseif ($enrollmentStatus === 'rejected')
-                <div class="alert-dismiss bg-rose-50 border-l-4 border-rose-500 text-rose-950 p-5 rounded-2xl shadow-sm flex items-start gap-4">
+                <div class="status-banner bg-rose-50 border-l-4 border-rose-500 text-rose-950 p-5 rounded-2xl shadow-sm flex items-start gap-4">
                     <div class="p-2 bg-rose-100 rounded-xl text-rose-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
                     </div>
@@ -334,7 +484,7 @@
                     </div>
                 </div>
             @elseif ($enrollmentStatus === 'endorsed' || $enrollmentStatus === 'active')
-                <div class="alert-dismiss bg-sky-50 border-l-4 border-sky-500 text-sky-950 p-5 rounded-2xl shadow-sm flex items-start gap-4">
+                <div class="status-banner bg-sky-50 border-l-4 border-sky-500 text-sky-950 p-5 rounded-2xl shadow-sm flex items-start gap-4">
                     <div class="p-2 bg-sky-100 rounded-xl text-sky-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
                     </div>

@@ -132,21 +132,21 @@
     <div class="bg-white rounded-lg shadow p-6">
         <h3 class="font-semibold mb-4">Download Reports</h3>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <button wire:click="downloadPersonnel"
+            <x-loading-button type="button" target="downloadPersonnel" loading="Preparing..." wire:click="downloadPersonnel"
                     class="flex items-center justify-center gap-2 bg-stormy-600 text-white px-4 py-3 rounded-md hover:bg-stormy-700 text-sm font-medium">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Personnel List
-            </button>
-            <button wire:click="downloadAttendance"
+            </x-loading-button>
+            <x-loading-button type="button" target="downloadAttendance" loading="Preparing..." wire:click="downloadAttendance"
                     class="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-3 rounded-md hover:bg-green-700 text-sm font-medium">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Attendance Record
-            </button>
-            <button wire:click="downloadEvaluations"
+            </x-loading-button>
+            <x-loading-button type="button" target="downloadEvaluations" loading="Preparing..." wire:click="downloadEvaluations"
                     class="flex items-center justify-center gap-2 bg-stormy-500 text-white px-4 py-3 rounded-md hover:bg-stormy-600 text-sm font-medium">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Evaluations
-            </button>
+            </x-loading-button>
         </div>
     </div>
 </div>

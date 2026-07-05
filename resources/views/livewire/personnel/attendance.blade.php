@@ -1,34 +1,4 @@
 <div class="space-y-6">
-    @if (session('message'))
-        <div class="alert-dismiss bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-xl shadow-sm animate-fade-in">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm font-semibold text-emerald-800">{{ session('message') }}</p>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="alert-dismiss bg-rose-50 border-l-4 border-rose-500 p-4 rounded-xl shadow-sm animate-fade-in">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-rose-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm font-semibold text-rose-800">{{ session('error') }}</p>
-                </div>
-            </div>
-        </div>
-    @endif
-
     {{-- Stats Grid --}}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow text-center">
@@ -71,34 +41,89 @@
         @endif
 
         <div class="flex flex-wrap items-center gap-4 mt-4">
-            @if (!$checkedIn)
-                <button wire:click="checkIn" {{ !$canCheckIn ? 'disabled' : '' }}
-                        class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-emerald-500/10 transition-all transform active:scale-95 text-base {{ !$canCheckIn ? 'opacity-50 cursor-not-allowed' : '' }}">
+            @if (!$todayRecord && $canCheckIn)
+                <x-loading-button type="button" target="checkIn" loading="Checking in..." wire:click="checkIn"
+                        class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-emerald-500/10 transition-all transform active:scale-95 text-base">
                     Check In
+                </x-loading-button>
+                <button type="button" wire:click="$set('showAbsentForm', true)"
+                        class="bg-white border border-rose-200 text-rose-700 font-bold px-8 py-3.5 rounded-xl hover:bg-rose-50 transition-all text-base">
+                    Mark Absent
                 </button>
-            @else
+            @endif
+
+            @if ($checkedIn && !$markedAbsent)
                 <div class="inline-flex items-center gap-2.5 bg-emerald-50 text-emerald-800 border border-emerald-100 px-5 py-3 rounded-xl font-semibold text-sm">
                     <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <span>Checked in at {{ substr($todayRecord->check_in, 0, 5) }}</span>
+                    @if ($todayRecord->check_in_validated_at)
+                        <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Validated</span>
+                    @else
+                        <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Pending validation</span>
+                    @endif
                 </div>
             @endif
 
-            @if ($checkedIn && !$checkedOut)
-                <button wire:click="checkOut" {{ !$canCheckIn ? 'disabled' : '' }}
+            @if ($checkedIn && !$checkedOut && !$markedAbsent)
+                <x-loading-button type="button" target="checkOut" loading="Checking out..." wire:click="checkOut"
+                        :disabled="! $canCheckIn"
                         class="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-rose-500/10 transition-all transform active:scale-95 text-base {{ !$canCheckIn ? 'opacity-50 cursor-not-allowed' : '' }}">
                     Check Out
-                </button>
-            @elseif ($checkedOut)
+                </x-loading-button>
+            @endif
+
+            @if ($checkedOut)
                 <div class="inline-flex items-center gap-2.5 bg-gray-50 text-gray-700 border border-gray-200/60 px-5 py-3 rounded-xl font-semibold text-sm">
                     <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <span>Checked out at {{ substr($todayRecord->check_out, 0, 5) }}</span>
+                    @if ($todayRecord->check_out_validated_at)
+                        <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Validated</span>
+                    @else
+                        <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Pending validation</span>
+                    @endif
+                </div>
+            @endif
+
+            @if ($markedAbsent)
+                <div class="inline-flex flex-col gap-1 bg-rose-50 text-rose-800 border border-rose-100 px-5 py-3 rounded-xl text-sm">
+                    <div class="flex items-center gap-2 font-semibold">
+                        <span>Marked absent today</span>
+                        @if ($todayRecord->absence_validated_at)
+                            <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Validated</span>
+                        @else
+                            <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Pending validation</span>
+                        @endif
+                    </div>
+                    <p class="text-rose-700">{{ $todayRecord->remarks }}</p>
                 </div>
             @endif
         </div>
+
+        @if ($showAbsentForm && !$todayRecord)
+            <form wire:submit="markAbsent" class="mt-6 p-5 bg-rose-50/50 border border-rose-100 rounded-xl space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Reason for absence <span class="text-rose-500">*</span></label>
+                    <textarea wire:model="absenceReason" rows="3" required
+                              class="w-full rounded-xl border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm"
+                              placeholder="Explain why you will be absent today..."></textarea>
+                    @error('absenceReason') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div class="flex gap-3">
+                    <x-loading-button target="markAbsent" loading="Submitting..."
+                            class="bg-rose-600 text-white px-6 py-2 rounded-xl text-sm font-semibold">
+                        Submit Absence
+                    </x-loading-button>
+                    <button type="button" wire:click="$set('showAbsentForm', false)"
+                            class="px-6 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        @endif
     </div>
 
     {{-- History Table --}}
@@ -115,6 +140,7 @@
                             <th class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-400">Status</th>
                             <th class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-400">Check In</th>
                             <th class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-400">Check Out</th>
+                            <th class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-400">Validation</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -130,10 +156,22 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $att->check_in ? $att->date->setTimeFromTimeString($att->check_in)->format('h:i A') : '-' }}
+                                    {{ $att->check_in ? substr($att->check_in, 0, 5) : '-' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $att->check_out ? $att->date->setTimeFromTimeString($att->check_out)->format('h:i A') : '-' }}
+                                    {{ $att->check_out ? substr($att->check_out, 0, 5) : '-' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-xs">
+                                    @if ($att->isAbsent())
+                                        {{ $att->absence_validated_at ? 'Validated' : 'Pending' }}
+                                    @else
+                                        @if ($att->check_in)
+                                            In: {{ $att->check_in_validated_at ? 'Validated' : 'Pending' }}
+                                        @endif
+                                        @if ($att->check_out)
+                                            · Out: {{ $att->check_out_validated_at ? 'Validated' : 'Pending' }}
+                                        @endif
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

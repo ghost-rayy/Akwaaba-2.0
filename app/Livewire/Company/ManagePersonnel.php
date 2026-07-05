@@ -4,12 +4,13 @@ namespace App\Livewire\Company;
 
 use App\Models\Department;
 use App\Models\Enrollment;
+use App\Support\DispatchesToast;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class ManagePersonnel extends Component
 {
-    use WithPagination;
+    use DispatchesToast, WithPagination;
 
     public $search = '';
     public $filterDepartment = '';
@@ -40,7 +41,7 @@ class ManagePersonnel extends Component
         $this->assigningPersonnelId = null;
         $this->assignDepartmentId = '';
 
-        session()->flash('message', 'Department assigned successfully.');
+        $this->toastSuccess('Department assigned successfully.');
     }
 
     public function render()

@@ -2,15 +2,13 @@
 
 namespace App\Livewire\Company;
 
-use App\Models\LetterTemplate;
+use App\Support\DispatchesToast;
 use Livewire\Component;
-use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Hash;
 
 class Settings extends Component
 {
-    use WithFileUploads;
-
+    use DispatchesToast;
     public $name;
     public $email;
     public $phone;
@@ -19,9 +17,6 @@ class Settings extends Component
     public $registration_number;
     public $contact_person;
     public $posting_date;
-    public $signature;
-    public $stamp;
-    public $posting_letter;
     public $current_password;
     public $new_password;
     public $new_password_confirmation;
@@ -64,56 +59,7 @@ class Settings extends Component
             'posting_date' => $this->posting_date,
         ]);
 
-        session()->flash('profile_message', 'Company profile updated.');
-    }
-
-    public function uploadSignature()
-    {
-        $this->validate([
-            'signature' => 'required|image|mimes:png,jpg,jpeg|max:2048',
-        ]);
-
-        $path = $this->signature->store('signatures/' . auth()->user()->company_id, 'public');
-        auth()->user()->company->update(['digital_signature_path' => $path]);
-
-        $this->signature = null;
-        session()->flash('signature_message', 'Signature uploaded.');
-    }
-
-    public function uploadStamp()
-    {
-        $this->validate([
-            'stamp' => 'required|image|mimes:png,jpg,jpeg|max:2048',
-        ]);
-
-        $path = $this->stamp->store('stamps/' . auth()->user()->company_id, 'public');
-        auth()->user()->company->update(['stamp_path' => $path]);
-
-        $this->stamp = null;
-        session()->flash('stamp_message', 'Stamp uploaded.');
-    }
-
-    public function uploadPostingLetter()
-    {
-        $this->validate([
-            'posting_letter' => 'required|file|mimes:pdf|max:10240',
-        ]);
-
-        $company = auth()->user()->company;
-        $path = $this->posting_letter->store('postingletters/' . $company->id, 'public');
-        $company->update(['posting_letter_path' => $path]);
-
-        LetterTemplate::updateOrCreate(
-            ['company_id' => $company->id, 'type' => 'posting_letter'],
-            [
-                'name' => $company->name . ' Posting Letter',
-                'template_file_path' => $path,
-                'is_active' => true,
-            ]
-        );
-
-        $this->posting_letter = null;
-        session()->flash('posting_letter_message', 'Posting letter template uploaded.');
+        $this->toastSuccess('Company profile updated.');
     }
 
     public function changePassword()
@@ -128,7 +74,7 @@ class Settings extends Component
         $this->current_password = null;
         $this->new_password = null;
         $this->new_password_confirmation = null;
-        session()->flash('password_message', 'Password changed.');
+        $this->toastSuccess('Password changed.');
     }
 
     public function render()

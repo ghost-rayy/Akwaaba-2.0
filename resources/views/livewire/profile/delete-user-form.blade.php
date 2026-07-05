@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Actions\Logout;
+use App\Support\GuardSession;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
 
@@ -17,9 +18,12 @@ new class extends Component
             'password' => ['required', 'string', 'current_password'],
         ]);
 
-        tap(Auth::user(), $logout(...))->delete();
+        $user = Auth::user();
+        $guard = Auth::getDefaultDriver();
 
-        $this->redirect('/', navigate: true);
+        tap($user, fn () => $logout($guard))->delete();
+
+        $this->redirect(route(GuardSession::loginRouteForUser($user), absolute: false), navigate: true);
     }
 }; ?>
 
@@ -70,7 +74,7 @@ new class extends Component
                     {{ __('Cancel') }}
                 </x-secondary-button>
 
-                <x-danger-button class="ms-3">
+                <x-danger-button class="ms-3" target="deleteUser" loading="Deleting...">
                     {{ __('Delete Account') }}
                 </x-danger-button>
             </div>

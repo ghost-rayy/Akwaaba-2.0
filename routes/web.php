@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Company\DocumentUploadController as CompanyDocumentUploadController;
+use App\Http\Controllers\Personnel\DocumentUploadController;
 use App\Livewire\Admin\Companies as AdminCompanies;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Admin\Personnel as AdminPersonnel;
@@ -20,19 +22,19 @@ use App\Livewire\Personnel\Dashboard as PersonnelDashboard;
 use App\Livewire\Personnel\Documents as PersonnelDocuments;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/login');
+Route::redirect('/', '/login')->name('home');
 
-Route::middleware(['auth'])->group(function () {
-
-    // Super Admin routes
-    Route::middleware('role:super_admin')->prefix('admin')->name('admin.')->group(function () {
+Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware('role:super_admin')->group(function () {
         Route::get('/dashboard', AdminDashboard::class)->name('dashboard');
         Route::get('/companies', AdminCompanies::class)->name('companies');
         Route::get('/personnel', AdminPersonnel::class)->name('personnel');
+        Route::view('profile', 'profile')->name('profile');
     });
+});
 
-    // Company routes (company_admin + hr_staff)
-    Route::middleware('role:company_admin,hr_staff')->prefix('company')->name('company.')->group(function () {
+Route::middleware('auth:company')->prefix('company')->name('company.')->group(function () {
+    Route::middleware('role:company_admin,hr_staff')->group(function () {
         Route::get('/dashboard', CompanyDashboard::class)->name('dashboard');
         Route::get('/onboard', CompanyOnboard::class)->name('onboard');
         Route::get('/departments', CompanyDepartments::class)->name('departments');
@@ -42,48 +44,45 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/evaluations', CompanyEvaluation::class)->name('evaluations');
         Route::get('/reports', CompanyReport::class)->name('reports');
         Route::get('/letters', CompanyLetters::class)->name('letters');
-        // Admin-only routes
+        Route::view('profile', 'profile')->name('profile');
+
         Route::middleware('role:company_admin')->group(function () {
             Route::get('/endorse', CompanyEndorseLetters::class)->name('endorse');
             Route::get('/endorsed-letters', CompanyEndorsedLetters::class)->name('endorsed-letters');
             Route::get('/settings', CompanySettings::class)->name('settings');
+            Route::post('/upload/logo', [CompanyDocumentUploadController::class, 'logo'])->name('upload.logo');
+            Route::post('/upload/stamp', [CompanyDocumentUploadController::class, 'stamp'])->name('upload.stamp');
+            Route::post('/upload/signature', [CompanyDocumentUploadController::class, 'signature'])->name('upload.signature');
+            Route::post('/upload/posting-letter', [CompanyDocumentUploadController::class, 'postingLetter'])->name('upload.posting-letter');
         });
     });
+});
 
-    // NSS Personnel routes
-    Route::middleware('role:nss_personnel')->prefix('personnel')->name('personnel.')->group(function () {
+Route::middleware('auth:personnel')->prefix('personnel')->name('personnel.')->group(function () {
+    Route::middleware('role:nss_personnel')->group(function () {
         Route::get('/dashboard', PersonnelDashboard::class)->name('dashboard');
+        Route::view('profile', 'profile')->name('profile');
+        Route::post('/upload/posting-letter', [DocumentUploadController::class, 'postingLetter'])->name('upload.posting-letter');
+        Route::post('/upload/passport-photo', [DocumentUploadController::class, 'passportPhoto'])->name('upload.passport-photo');
 
         Route::middleware('completed.profile')->group(function () {
             Route::get('/attendance', PersonnelAttendance::class)->name('attendance');
             Route::get('/documents', PersonnelDocuments::class)->name('documents');
         });
     });
+});
 
-    // Fallback dashboard
-    Route::get('/dashboard', function () {
-        return match (auth()->user()->role) {
-            'super_admin' => redirect()->route('admin.dashboard'),
-            'company_admin', 'hr_staff' => redirect()->route('company.dashboard'),
-            'nss_personnel' => redirect()->route('personnel.dashboard'),
-            default => view('dashboard'),
-        };
-    })->name('dashboard');
-
-    Route::view('profile', 'profile')
-        ->middleware(['auth'])
-        ->name('profile');
-
+Route::middleware('auth.any')->group(function () {
     Route::get('/document/stream/{id}', function ($id) {
         $document = \App\Models\Document::findOrFail($id);
         $user = auth()->user();
-        
+
         if ($user->role !== 'super_admin' && $user->company_id !== $document->company_id && $user->id !== $document->user_id) {
             abort(403);
         }
 
-        $path = storage_path('app/public/' . $document->file_path);
-        if (!file_exists($path)) {
+        $path = storage_path('app/public/'.$document->file_path);
+        if (! file_exists($path)) {
             abort(404);
         }
 

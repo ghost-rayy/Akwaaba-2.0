@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Mail\CompanyAdminOnboardedMail;
 use App\Models\Company;
 use App\Models\User;
+use App\Support\DispatchesToast;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -13,7 +14,7 @@ use Livewire\WithPagination;
 
 class Companies extends Component
 {
-    use WithPagination;
+    use DispatchesToast, WithPagination;
 
     public $search = '';
     public $showModal = false;
@@ -57,7 +58,7 @@ class Companies extends Component
                 'is_active' => $this->is_active,
             ]);
 
-            session()->flash('message', 'Company updated.');
+            $this->toastSuccess('Company updated.');
             $this->reset(['editingId', 'name', 'admin_email', 'showModal']);
             return;
         }
@@ -86,7 +87,7 @@ class Companies extends Component
 
         Mail::to($admin->email)->send(new CompanyAdminOnboardedMail($admin, $password));
 
-        session()->flash('message', "Company created. Login details sent to {$this->admin_email}.");
+        $this->toastSuccess("Company created. Login details sent to {$this->admin_email}.");
         $this->reset(['editingId', 'name', 'admin_email', 'showModal']);
     }
 

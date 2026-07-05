@@ -12,6 +12,7 @@ document.addEventListener('alpine:init', () => {
         currentPage: 1,
         numPages: 1,
         selectedFieldId: null,
+        saving: false,
         init() {
             const canvas = this.$el.querySelector('#pdf-canvas');
             const overlay = this.$el.querySelector('#field-overlay');
@@ -68,13 +69,22 @@ document.addEventListener('alpine:init', () => {
                 if (this.builder) this.builder.setPage(this.currentPage);
             }
         },
-        saveMappings() {
+        async saveMappings() {
             const valid = this.fields.filter(f => f.field_key);
             if (valid.length === 0) {
-                alert('Place at least one field on the template.');
+                if (window.toast) {
+                    window.toast('Place at least one field on the template.', 'warning');
+                } else {
+                    alert('Place at least one field on the template.');
+                }
                 return;
             }
-            this.$wire.call('saveFieldMappings', valid);
+            this.saving = true;
+            try {
+                await this.$wire.call('saveFieldMappings', valid);
+            } finally {
+                this.saving = false;
+            }
         },
     }));
 });

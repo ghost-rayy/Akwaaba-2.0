@@ -65,7 +65,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::flash('status', __($status));
 
-        $this->redirectRoute('login', navigate: true);
+        $this->redirectRoute('company.login', navigate: true);
     }
 }; ?>
 
@@ -97,7 +97,7 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
 
         <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
+            <x-primary-button target="resetPassword" loading="Resetting password...">
                 {{ __('Reset Password') }}
             </x-primary-button>
         </div>

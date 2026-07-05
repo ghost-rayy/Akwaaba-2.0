@@ -18,7 +18,7 @@ new #[Layout('layouts.guest')] class extends Component
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::guard('web')->validate([
+        if (! Auth::guard(Auth::getDefaultDriver())->validate([
             'email' => Auth::user()->email,
             'password' => $this->password,
         ])) {
@@ -29,7 +29,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         session(['auth.password_confirmed_at' => time()]);
 
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+        $this->redirectIntended(default: route(\App\Support\GuardSession::dashboardRoute(), absolute: false), navigate: true);
     }
 }; ?>
 
@@ -54,7 +54,7 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
 
         <div class="flex justify-end mt-4">
-            <x-primary-button>
+            <x-primary-button target="confirmPassword" loading="Confirming...">
                 {{ __('Confirm') }}
             </x-primary-button>
         </div>

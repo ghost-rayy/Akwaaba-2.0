@@ -4,12 +4,6 @@
         <p class="text-sm text-gray-500 mt-0.5">Access and download your endorsed letters and onboarding credentials.</p>
     </div>
 
-    @if (session('success'))
-        <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl font-semibold text-sm">
-            {{ session('success') }}
-        </div>
-    @endif
-
     @if ($endorsedLetters->isEmpty())
         <div class="bg-white border border-gray-100 rounded-2xl p-12 text-center shadow-sm">
             <span class="text-gray-300 block mb-3">
@@ -87,9 +81,10 @@
                                     <label class="block text-xs font-semibold text-gray-600">Upload Validated Endorsed Posting Letter (PDF)</label>
                                     <div class="flex items-center gap-2">
                                         <input type="file" wire:model="validatedFile" accept=".pdf" class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100">
-                                        <button type="submit" class="px-3.5 py-2 bg-stormy-600 hover:bg-stormy-700 text-white rounded-lg text-xs font-bold transition-all whitespace-nowrap shadow-sm">
+                                        <x-loading-button target="uploadValidatedLetter({{ $letter->id }})" loading="Uploading..."
+                                                class="px-3.5 py-2 bg-stormy-600 hover:bg-stormy-700 text-white rounded-lg text-xs font-bold transition-all whitespace-nowrap shadow-sm">
                                             Upload
-                                        </button>
+                                        </x-loading-button>
                                     </div>
                                     <div wire:loading wire:target="validatedFile" class="text-xs text-gray-400">Uploading file...</div>
                                     @error('validatedFile') <p class="text-red-500 text-[10px] mt-0.5">{{ $message }}</p> @enderror

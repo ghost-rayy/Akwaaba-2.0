@@ -5,6 +5,7 @@ namespace App\Livewire\Company;
 use App\Mail\OnboardedMail;
 use App\Models\Enrollment;
 use App\Models\User;
+use App\Support\DispatchesToast;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -12,11 +13,11 @@ use Livewire\Component;
 
 class OnboardPersonnel extends Component
 {
+    use DispatchesToast;
     public $nss_number = '';
     public $email = '';
     public $phone = '';
     public $nss_year = '';
-    public $successMessage = '';
 
     public $years = [];
 
@@ -83,7 +84,7 @@ class OnboardPersonnel extends Component
 
         Mail::to($personnel->email)->send(new OnboardedMail($personnel, $password));
 
-        $this->successMessage = "Personnel onboarded successfully! Email sent to {$this->email}.";
+        $this->toastSuccess("Personnel onboarded successfully! Email sent to {$this->email}.");
 
         $this->reset(['nss_number', 'email', 'phone']);
     }

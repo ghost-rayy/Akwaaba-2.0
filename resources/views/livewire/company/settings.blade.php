@@ -1,21 +1,5 @@
 <div>
     <div class="max-w-3xl mx-auto space-y-8">
-        @if (session('profile_message'))
-            <div class="alert-dismiss bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm">{{ session('profile_message') }}</div>
-        @endif
-        @if (session('signature_message'))
-            <div class="alert-dismiss bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm">{{ session('signature_message') }}</div>
-        @endif
-        @if (session('stamp_message'))
-            <div class="alert-dismiss bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm">{{ session('stamp_message') }}</div>
-        @endif
-        @if (session('posting_letter_message'))
-            <div class="alert-dismiss bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm">{{ session('posting_letter_message') }}</div>
-        @endif
-        @if (session('password_message'))
-            <div class="alert-dismiss bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm">{{ session('password_message') }}</div>
-        @endif
-
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-6">Company Profile</h2>
             <form wire:submit="updateProfile" class="space-y-4">
@@ -63,12 +47,88 @@
                     @error('postal_address') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div class="flex justify-end">
-                    <button type="submit" class="px-6 py-2.5 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors">Save Changes</button>
+                    <x-loading-button target="updateProfile" loading="Saving..."
+                            class="px-6 py-2.5 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors">
+                        Save Changes
+                    </x-loading-button>
                 </div>
             </form>
         </div>
 
         @php $company = auth()->user()->company; @endphp
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Company Logo</h2>
+            <p class="text-sm text-gray-500 mb-4">Upload your company logo. It will appear in the navigation bar for your team.</p>
+            @if ($company->logo_path)
+                <div class="mb-4 p-4 bg-gray-50 rounded-lg inline-flex items-center gap-4">
+                    <img src="{{ asset('storage/' . $company->logo_path) }}" alt="{{ $company->name }} logo" class="h-16 w-16 object-contain rounded-lg border border-gray-200 bg-white p-1">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Logo uploaded</p>
+                        <p class="text-xs text-gray-500">Re-upload to replace the current logo.</p>
+                    </div>
+                </div>
+            @endif
+            <form
+                x-data="{
+                    uploading: false,
+                    error: null,
+                    async submit(event) {
+                        event.preventDefault();
+                        const file = this.$refs.fileInput.files[0];
+                        if (!file) {
+                            this.error = 'Please select an image first.';
+                            return;
+                        }
+                        this.uploading = true;
+                        this.error = null;
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        try {
+                            const response = await fetch('{{ route('company.upload.logo') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                    'Accept': 'application/json',
+                                },
+                                body: formData,
+                                credentials: 'same-origin',
+                            });
+                            const data = await response.json();
+                            if (!response.ok) {
+                                const message = data.errors?.file?.[0] ?? data.message ?? (response.status === 419 ? 'Session expired. Please refresh the page.' : 'Upload failed');
+                                throw new Error(message);
+                            }
+                            if (window.toast) window.toast(data.message, 'success');
+                            if (data.logo_url && window.Livewire) {
+                                Livewire.dispatch('company-logo-updated', { url: data.logo_url });
+                            }
+                            $wire.$refresh();
+                            this.$refs.fileInput.value = '';
+                        } catch (e) {
+                            this.error = e.message || 'Upload failed. Please try again.';
+                        } finally {
+                            this.uploading = false;
+                        }
+                    },
+                }"
+                @submit="submit($event)"
+                class="flex items-end gap-4"
+            >
+                <div class="flex-1">
+                    <input x-ref="fileInput" type="file" accept="image/png,image/jpeg" class="w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100">
+                    <p x-show="error" x-text="error" class="text-red-500 text-xs mt-1" style="display: none;"></p>
+                </div>
+                <button type="submit" :disabled="uploading"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed">
+                    <span x-show="!uploading">Upload</span>
+                    <span x-show="uploading" style="display: none;" class="inline-flex items-center gap-2">
+                        <x-loading-spinner />
+                        Uploading...
+                    </span>
+                </button>
+            </form>
+        </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Posting Letter Template</h2>
@@ -82,13 +142,61 @@
                     </div>
                 </div>
             @endif
-            <form wire:submit="uploadPostingLetter" class="flex items-end gap-4">
+            <form
+                x-data="{
+                    uploading: false,
+                    error: null,
+                    async submit(event) {
+                        event.preventDefault();
+                        const file = this.$refs.fileInput.files[0];
+                        if (!file) {
+                            this.error = 'Please select a PDF file first.';
+                            return;
+                        }
+                        this.uploading = true;
+                        this.error = null;
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        try {
+                            const response = await fetch('{{ route('company.upload.posting-letter') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                    'Accept': 'application/json',
+                                },
+                                body: formData,
+                                credentials: 'same-origin',
+                            });
+                            const data = await response.json();
+                            if (!response.ok) {
+                                const message = data.errors?.file?.[0] ?? data.message ?? (response.status === 419 ? 'Session expired. Please refresh the page.' : 'Upload failed');
+                                throw new Error(message);
+                            }
+                            if (window.toast) window.toast(data.message, 'success');
+                            $wire.$refresh();
+                            this.$refs.fileInput.value = '';
+                        } catch (e) {
+                            this.error = e.message || 'Upload failed. Please try again.';
+                        } finally {
+                            this.uploading = false;
+                        }
+                    },
+                }"
+                @submit="submit($event)"
+                class="flex items-end gap-4"
+            >
                 <div class="flex-1">
-                    <input wire:model="posting_letter" type="file" accept=".pdf" class="w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100">
-                    @error('posting_letter') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    <div wire:loading wire:target="posting_letter" class="text-stormy-600 text-sm mt-1">Uploading...</div>
+                    <input x-ref="fileInput" type="file" accept=".pdf,application/pdf" class="w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100">
+                    <p x-show="error" x-text="error" class="text-red-500 text-xs mt-1" style="display: none;"></p>
                 </div>
-                <button type="submit" class="px-4 py-2 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors whitespace-nowrap">Upload</button>
+                <button type="submit" :disabled="uploading"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed">
+                    <span x-show="!uploading">Upload</span>
+                    <span x-show="uploading" style="display: none;" class="inline-flex items-center gap-2">
+                        <x-loading-spinner />
+                        Uploading...
+                    </span>
+                </button>
             </form>
         </div>
 
@@ -99,12 +207,61 @@
                     <img src="{{ asset('storage/' . $company->digital_signature_path) }}" alt="Signature" class="h-16 object-contain">
                 </div>
             @endif
-            <form wire:submit="uploadSignature" class="flex items-end gap-4">
+            <form
+                x-data="{
+                    uploading: false,
+                    error: null,
+                    async submit(event) {
+                        event.preventDefault();
+                        const file = this.$refs.fileInput.files[0];
+                        if (!file) {
+                            this.error = 'Please select an image first.';
+                            return;
+                        }
+                        this.uploading = true;
+                        this.error = null;
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        try {
+                            const response = await fetch('{{ route('company.upload.signature') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                    'Accept': 'application/json',
+                                },
+                                body: formData,
+                                credentials: 'same-origin',
+                            });
+                            const data = await response.json();
+                            if (!response.ok) {
+                                const message = data.errors?.file?.[0] ?? data.message ?? (response.status === 419 ? 'Session expired. Please refresh the page.' : 'Upload failed');
+                                throw new Error(message);
+                            }
+                            if (window.toast) window.toast(data.message, 'success');
+                            $wire.$refresh();
+                            this.$refs.fileInput.value = '';
+                        } catch (e) {
+                            this.error = e.message || 'Upload failed. Please try again.';
+                        } finally {
+                            this.uploading = false;
+                        }
+                    },
+                }"
+                @submit="submit($event)"
+                class="flex items-end gap-4"
+            >
                 <div class="flex-1">
-                    <input wire:model="signature" type="file" accept="image/png,image/jpeg" class="w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100">
-                    @error('signature') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    <input x-ref="fileInput" type="file" accept="image/png,image/jpeg" class="w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100">
+                    <p x-show="error" x-text="error" class="text-red-500 text-xs mt-1" style="display: none;"></p>
                 </div>
-                <button type="submit" class="px-4 py-2 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors whitespace-nowrap">Upload</button>
+                <button type="submit" :disabled="uploading"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed">
+                    <span x-show="!uploading">Upload</span>
+                    <span x-show="uploading" style="display: none;" class="inline-flex items-center gap-2">
+                        <x-loading-spinner />
+                        Uploading...
+                    </span>
+                </button>
             </form>
         </div>
 
@@ -115,12 +272,61 @@
                     <img src="{{ asset('storage/' . $company->stamp_path) }}" alt="Stamp" class="h-20 object-contain">
                 </div>
             @endif
-            <form wire:submit="uploadStamp" class="flex items-end gap-4">
+            <form
+                x-data="{
+                    uploading: false,
+                    error: null,
+                    async submit(event) {
+                        event.preventDefault();
+                        const file = this.$refs.fileInput.files[0];
+                        if (!file) {
+                            this.error = 'Please select an image first.';
+                            return;
+                        }
+                        this.uploading = true;
+                        this.error = null;
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        try {
+                            const response = await fetch('{{ route('company.upload.stamp') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                    'Accept': 'application/json',
+                                },
+                                body: formData,
+                                credentials: 'same-origin',
+                            });
+                            const data = await response.json();
+                            if (!response.ok) {
+                                const message = data.errors?.file?.[0] ?? data.message ?? (response.status === 419 ? 'Session expired. Please refresh the page.' : 'Upload failed');
+                                throw new Error(message);
+                            }
+                            if (window.toast) window.toast(data.message, 'success');
+                            $wire.$refresh();
+                            this.$refs.fileInput.value = '';
+                        } catch (e) {
+                            this.error = e.message || 'Upload failed. Please try again.';
+                        } finally {
+                            this.uploading = false;
+                        }
+                    },
+                }"
+                @submit="submit($event)"
+                class="flex items-end gap-4"
+            >
                 <div class="flex-1">
-                    <input wire:model="stamp" type="file" accept="image/png,image/jpeg" class="w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100">
-                    @error('stamp') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    <input x-ref="fileInput" type="file" accept="image/png,image/jpeg" class="w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100">
+                    <p x-show="error" x-text="error" class="text-red-500 text-xs mt-1" style="display: none;"></p>
                 </div>
-                <button type="submit" class="px-4 py-2 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors whitespace-nowrap">Upload</button>
+                <button type="submit" :disabled="uploading"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed">
+                    <span x-show="!uploading">Upload</span>
+                    <span x-show="uploading" style="display: none;" class="inline-flex items-center gap-2">
+                        <x-loading-spinner />
+                        Uploading...
+                    </span>
+                </button>
             </form>
         </div>
 
@@ -142,7 +348,10 @@
                     <input wire:model="new_password_confirmation" type="password" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500">
                 </div>
                 <div class="flex justify-end">
-                    <button type="submit" class="px-6 py-2.5 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors">Change Password</button>
+                    <x-loading-button target="changePassword" loading="Changing password..."
+                            class="px-6 py-2.5 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors">
+                        Change Password
+                    </x-loading-button>
                 </div>
             </form>
         </div>

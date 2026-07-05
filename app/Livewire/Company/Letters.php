@@ -4,12 +4,13 @@ namespace App\Livewire\Company;
 
 use App\Models\LetterTemplate;
 use App\Models\TemplateFieldMapping;
+use App\Support\DispatchesToast;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
 class Letters extends Component
 {
-    use WithFileUploads;
+    use DispatchesToast, WithFileUploads;
 
     public $mode = 'list';
     public $selectedTemplateId = null;
@@ -83,7 +84,7 @@ class Letters extends Component
 
         $template->update(['is_active' => true]);
 
-        session()->flash('message', 'Field mappings saved successfully.');
+        $this->toastSuccess('Field mappings saved successfully.');
         $this->mode = 'list';
     }
 
@@ -95,7 +96,7 @@ class Letters extends Component
         $template->fieldMappings()->delete();
         $template->delete();
 
-        session()->flash('message', 'Template deleted. Upload a new one in Settings.');
+        $this->toastSuccess('Template deleted. Upload a new one in Settings.');
     }
 
     public function render()

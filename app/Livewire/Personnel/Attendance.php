@@ -3,16 +3,22 @@
 namespace App\Livewire\Personnel;
 
 use App\Models\Attendance as AttendanceModel;
+use App\Support\DispatchesToast;
 use Livewire\Component;
 
 class Attendance extends Component
 {
+    use DispatchesToast;
+
     public $todayRecord;
     public $checkedIn = false;
     public $checkedOut = false;
+    public $markedAbsent = false;
     public $canCheckIn = false;
     public $statusMessage = '';
     public $enrollmentStatus = '';
+    public $showAbsentForm = false;
+    public $absenceReason = '';
 
     public function mount()
     {
@@ -25,16 +31,17 @@ class Attendance extends Component
         $user = auth()->user();
         $enrollment = $user->enrollment;
 
-        if (!$enrollment) {
+        if (! $enrollment) {
             $this->canCheckIn = false;
             $this->enrollmentStatus = 'none';
             $this->statusMessage = 'You are not enrolled in any company.';
+
             return;
         }
 
         $this->enrollmentStatus = $enrollment->status;
 
-        if ($enrollment->status === 'validated') {
+        if (in_array($enrollment->status, ['validated', 'active'], true)) {
             $this->canCheckIn = true;
             $this->statusMessage = '';
         } elseif ($enrollment->status === 'rejected') {
@@ -50,19 +57,27 @@ class Attendance extends Component
     {
         $user = auth()->user();
         $this->todayRecord = AttendanceModel::where('user_id', $user->id)
-            ->where('date', now()->format('Y-m-d'))
+            ->whereDate('date', now()->format('Y-m-d'))
             ->first();
 
-        $this->checkedIn = !is_null($this->todayRecord?->check_in);
-        $this->checkedOut = !is_null($this->todayRecord?->check_out);
+        $this->markedAbsent = $this->todayRecord?->isAbsent() ?? false;
+        $this->checkedIn = ! is_null($this->todayRecord?->check_in);
+        $this->checkedOut = ! is_null($this->todayRecord?->check_out);
     }
 
     public function checkIn()
     {
         $this->checkEligibility();
 
-        if (!$this->canCheckIn) {
-            session()->flash('error', $this->statusMessage);
+        if (! $this->canCheckIn) {
+            $this->toastError($this->statusMessage);
+
+            return;
+        }
+
+        if ($this->todayRecord?->isAbsent()) {
+            $this->toastError('You have already marked yourself absent for today.');
+
             return;
         }
 
@@ -77,32 +92,91 @@ class Attendance extends Component
             [
                 'check_in' => now()->format('H:i:s'),
                 'status' => now()->hour >= 9 ? 'late' : 'present',
+                'check_in_validated_at' => null,
+                'check_in_validated_by' => null,
             ]
         );
 
+        $this->showAbsentForm = false;
         $this->loadToday();
-        session()->flash('message', 'Checked in successfully.');
+        $this->toastSuccess('Check-in submitted. Awaiting company validation.');
     }
 
     public function checkOut()
     {
         $this->checkEligibility();
 
-        if (!$this->canCheckIn) {
-            session()->flash('error', $this->statusMessage);
+        if (! $this->canCheckIn) {
+            $this->toastError($this->statusMessage);
+
             return;
         }
 
         $user = auth()->user();
 
         $attendance = AttendanceModel::where('user_id', $user->id)
-            ->where('date', now()->format('Y-m-d'))
+            ->whereDate('date', now()->format('Y-m-d'))
             ->firstOrFail();
 
-        $attendance->update(['check_out' => now()->format('H:i:s')]);
+        $attendance->update([
+            'check_out' => now()->format('H:i:s'),
+            'check_out_validated_at' => null,
+            'check_out_validated_by' => null,
+        ]);
 
         $this->loadToday();
-        session()->flash('message', 'Checked out successfully.');
+        $this->toastSuccess('Check-out submitted. Awaiting company validation.');
+    }
+
+    public function markAbsent()
+    {
+        $this->checkEligibility();
+
+        if (! $this->canCheckIn) {
+            $this->toastError($this->statusMessage);
+
+            return;
+        }
+
+        $this->validate([
+            'absenceReason' => 'required|string|min:5|max:1000',
+        ], [
+            'absenceReason.required' => 'Please provide a reason for your absence.',
+            'absenceReason.min' => 'The absence reason must be at least 5 characters.',
+        ]);
+
+        if ($this->todayRecord?->check_in) {
+            $this->toastError('You have already checked in today and cannot mark absent.');
+
+            return;
+        }
+
+        $user = auth()->user();
+
+        AttendanceModel::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'company_id' => $user->company_id,
+                'date' => now()->format('Y-m-d'),
+            ],
+            [
+                'status' => 'absent',
+                'remarks' => $this->absenceReason,
+                'check_in' => null,
+                'check_out' => null,
+                'check_in_validated_at' => null,
+                'check_in_validated_by' => null,
+                'check_out_validated_at' => null,
+                'check_out_validated_by' => null,
+                'absence_validated_at' => null,
+                'absence_validated_by' => null,
+            ]
+        );
+
+        $this->showAbsentForm = false;
+        $this->absenceReason = '';
+        $this->loadToday();
+        $this->toastSuccess('Absence submitted. Awaiting company validation.');
     }
 
     public function render()
@@ -115,9 +189,9 @@ class Attendance extends Component
             ->get();
 
         $stats = [
-            'present' => AttendanceModel::where('user_id', $user->id)->where('status', 'present')->count(),
-            'absent' => AttendanceModel::where('user_id', $user->id)->where('status', 'absent')->count(),
-            'late' => AttendanceModel::where('user_id', $user->id)->where('status', 'late')->count(),
+            'present' => AttendanceModel::where('user_id', $user->id)->where('status', 'present')->whereNotNull('check_in_validated_at')->count(),
+            'absent' => AttendanceModel::where('user_id', $user->id)->where('status', 'absent')->whereNotNull('absence_validated_at')->count(),
+            'late' => AttendanceModel::where('user_id', $user->id)->where('status', 'late')->whereNotNull('check_in_validated_at')->count(),
         ];
 
         return view('livewire.personnel.attendance', [

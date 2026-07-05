@@ -3,80 +3,195 @@
 namespace App\Livewire\Company;
 
 use App\Models\Attendance as AttendanceModel;
-use App\Models\Enrollment;
+use App\Support\DispatchesToast;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Attendance extends Component
 {
+    use DispatchesToast, WithPagination;
+
     public $selectedDate;
-    public $records = [];
-    public $saving = false;
+    public $search = '';
+    public $sortField = 'check_in';
+    public $sortDirection = 'desc';
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'sortField' => ['except' => 'check_in'],
+        'sortDirection' => ['except' => 'desc'],
+    ];
 
     public function mount()
     {
         $this->selectedDate = now()->format('Y-m-d');
-        $this->loadRecords();
     }
 
-    public function loadRecords()
+    public function updatedSearch()
     {
-        $company = auth()->user()->company;
-
-        $personnel = Enrollment::where('company_id', $company->id)
-            ->whereIn('status', ['endorsed', 'active'])
-            ->with('user')
-            ->get();
-
-        $existing = AttendanceModel::where('company_id', $company->id)
-            ->where('date', $this->selectedDate)
-            ->get()
-            ->keyBy('user_id');
-
-        $this->records = $personnel->map(function ($e) use ($existing) {
-            $att = $existing->get($e->user_id);
-            return [
-                'enrollment_id' => $e->id,
-                'user_id' => $e->user_id,
-                'name' => $e->user->name,
-                'nss_number' => $e->nss_number,
-                'status' => $att?->status ?? 'present',
-                'check_in' => $att?->check_in ? substr($att->check_in, 0, 5) : '',
-                'check_out' => $att?->check_out ? substr($att->check_out, 0, 5) : '',
-                'remarks' => $att?->remarks ?? '',
-            ];
-        })->toArray();
+        $this->resetPage();
     }
 
     public function updatedSelectedDate()
     {
-        $this->loadRecords();
+        $this->resetPage();
     }
 
-    public function saveAll()
+    public function sortBy(string $field)
     {
-        $company = auth()->user()->company;
-
-        foreach ($this->records as $record) {
-            AttendanceModel::updateOrCreate(
-                [
-                    'user_id' => $record['user_id'],
-                    'company_id' => $company->id,
-                    'date' => $this->selectedDate,
-                ],
-                [
-                    'status' => $record['status'],
-                    'check_in' => $record['check_in'] ?: null,
-                    'check_out' => $record['check_out'] ?: null,
-                    'remarks' => $record['remarks'] ?: null,
-                ]
-            );
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
         }
 
-        session()->flash('message', 'Attendance saved for ' . date('d M Y', strtotime($this->selectedDate)) . '.');
+        $this->resetPage();
+    }
+
+    public function validateCheckIn(int $attendanceId)
+    {
+        $attendance = $this->findCompanyAttendance($attendanceId);
+
+        if (! $attendance->check_in) {
+            $this->toastError('No check-in to validate.');
+
+            return;
+        }
+
+        $attendance->update([
+            'check_in_validated_at' => now(),
+            'check_in_validated_by' => auth()->id(),
+        ]);
+
+        $this->toastSuccess($attendance->user->name."'s check-in validated.");
+    }
+
+    public function validateCheckOut(int $attendanceId)
+    {
+        $attendance = $this->findCompanyAttendance($attendanceId);
+
+        if (! $attendance->check_out) {
+            $this->toastError('No check-out to validate.');
+
+            return;
+        }
+
+        $attendance->update([
+            'check_out_validated_at' => now(),
+            'check_out_validated_by' => auth()->id(),
+        ]);
+
+        $this->toastSuccess($attendance->user->name."'s check-out validated.");
+    }
+
+    public function validateAbsence(int $attendanceId)
+    {
+        $attendance = $this->findCompanyAttendance($attendanceId);
+
+        if (! $attendance->isAbsent()) {
+            $this->toastError('This record is not an absence submission.');
+
+            return;
+        }
+
+        $attendance->update([
+            'absence_validated_at' => now(),
+            'absence_validated_by' => auth()->id(),
+        ]);
+
+        $this->toastSuccess($attendance->user->name."'s absence validated.");
+    }
+
+    protected function findCompanyAttendance(int $attendanceId): AttendanceModel
+    {
+        return AttendanceModel::where('company_id', auth()->user()->company_id)
+            ->with('user')
+            ->findOrFail($attendanceId);
+    }
+
+    protected function baseQuery()
+    {
+        return AttendanceModel::query()
+            ->where('company_id', auth()->user()->company_id)
+            ->whereDate('date', $this->selectedDate)
+            ->where(function ($query) {
+                $query->whereNotNull('check_in')
+                    ->orWhereNotNull('check_out')
+                    ->orWhere('status', 'absent');
+            })
+            ->with(['user.enrollment']);
+    }
+
+    protected function applySearch($query)
+    {
+        if ($this->search === '') {
+            return $query;
+        }
+
+        $term = trim($this->search);
+
+        return $query->where(function ($q) use ($term) {
+            $q->whereHas('user', fn ($userQuery) => $userQuery->where('name', 'like', "%{$term}%"))
+                ->orWhereHas('user.enrollment', fn ($enrollmentQuery) => $enrollmentQuery->where('nss_number', 'like', "%{$term}%"));
+        });
+    }
+
+    protected function applySort($query)
+    {
+        $direction = $this->sortDirection;
+
+        return match ($this->sortField) {
+            'name' => $query->orderBy(
+                \App\Models\User::select('name')->whereColumn('users.id', 'attendance.user_id'),
+                $direction
+            ),
+            'nss_number' => $query->orderBy(
+                \App\Models\Enrollment::select('nss_number')
+                    ->whereColumn('enrollments.user_id', 'attendance.user_id')
+                    ->limit(1),
+                $direction
+            ),
+            'status' => $query->orderBy('status', $direction),
+            'check_out' => $query->orderBy('check_out', $direction),
+            'date' => $query->orderBy('date', $direction)->orderBy('check_in', $direction),
+            default => $query->orderBy('check_in', $direction),
+        };
     }
 
     public function render()
     {
-        return view('livewire.company.attendance')->layout('layouts.company');
+        $dailyQuery = $this->applySort($this->applySearch($this->baseQuery()));
+        $records = $dailyQuery->paginate(15);
+
+        $historyQuery = AttendanceModel::query()
+            ->where('company_id', auth()->user()->company_id)
+            ->where(function ($query) {
+                $query->whereNotNull('check_in')
+                    ->orWhereNotNull('check_out')
+                    ->orWhere('status', 'absent');
+            })
+            ->with(['user.enrollment']);
+
+        $historyQuery = $this->applySearch($historyQuery);
+        $history = $this->applySort($historyQuery)->limit(50)->get();
+
+        $pendingCount = AttendanceModel::where('company_id', auth()->user()->company_id)
+            ->where(function ($query) {
+                $query->where(function ($q) {
+                    $q->whereNotNull('check_in')->whereNull('check_in_validated_at');
+                })->orWhere(function ($q) {
+                    $q->whereNotNull('check_out')->whereNull('check_out_validated_at');
+                })->orWhere(function ($q) {
+                    $q->where('status', 'absent')->whereNull('absence_validated_at');
+                });
+            })
+            ->count();
+
+        return view('livewire.company.attendance', [
+            'records' => $records,
+            'history' => $history,
+            'pendingCount' => $pendingCount,
+        ])->layout('layouts.company');
     }
 }

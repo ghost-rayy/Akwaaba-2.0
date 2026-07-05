@@ -4,15 +4,17 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
-Route::middleware('guest')->group(function () {
-    Volt::route('register', 'pages.auth.register')
-        ->name('register');
+Route::middleware('guest:admin')->group(function () {
+    Volt::route('admin/login', 'pages.auth.admin-login')
+        ->name('admin.login');
+});
 
-    Volt::route('login', 'pages.auth.login')
-        ->name('login');
+Route::middleware('guest:company')->group(function () {
+    Volt::route('company/login', 'pages.auth.login')
+        ->name('company.login');
 
-    Volt::route('personnel/login', 'pages.auth.personnel-login')
-        ->name('personnel.login');
+    Volt::route('hr/login', 'pages.auth.hr-login')
+        ->name('hr.login');
 
     Volt::route('forgot-password', 'pages.auth.forgot-password')
         ->name('password.request');
@@ -21,7 +23,15 @@ Route::middleware('guest')->group(function () {
         ->name('password.reset');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware('guest:personnel')->group(function () {
+    Volt::route('login', 'pages.auth.personnel-login')
+        ->name('login');
+
+    Volt::route('register', 'pages.auth.register')
+        ->name('register');
+});
+
+Route::middleware('auth:admin,company,personnel')->group(function () {
     Volt::route('verify-email', 'pages.auth.verify-email')
         ->name('verification.notice');
 

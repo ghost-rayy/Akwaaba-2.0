@@ -14,9 +14,11 @@ class PasswordUpdateTest extends TestCase
 
     public function test_password_can_be_updated(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'must_change_password' => false,
+        ]);
 
-        $this->actingAs($user);
+        $this->actingAs($user, 'personnel');
 
         $component = Volt::test('profile.update-password-form')
             ->set('current_password', 'password')
@@ -33,9 +35,11 @@ class PasswordUpdateTest extends TestCase
 
     public function test_correct_password_must_be_provided_to_update_password(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'must_change_password' => false,
+        ]);
 
-        $this->actingAs($user);
+        $this->actingAs($user, 'personnel');
 
         $component = Volt::test('profile.update-password-form')
             ->set('current_password', 'wrong-password')

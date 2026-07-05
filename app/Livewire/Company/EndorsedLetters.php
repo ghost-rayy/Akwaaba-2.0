@@ -3,10 +3,12 @@
 namespace App\Livewire\Company;
 
 use App\Models\EndorsedLetter;
+use App\Support\DispatchesToast;
 use Livewire\Component;
 
 class EndorsedLetters extends Component
 {
+    use DispatchesToast;
     public $previewUrl = null;
     public $previewName = null;
     public $rejectingId = null;
@@ -42,7 +44,7 @@ class EndorsedLetters extends Component
             'status' => 'validated',
         ]);
 
-        session()->flash('message', 'Personnel validated successfully.');
+        $this->toastSuccess('Personnel validated successfully.');
     }
 
     public function confirmReject($letterId)
@@ -66,7 +68,7 @@ class EndorsedLetters extends Component
         $this->rejectingId = null;
         $this->rejectReason = '';
 
-        session()->flash('message', 'Personnel rejected.');
+        $this->toastSuccess('Personnel rejected.');
     }
 
     public function render()

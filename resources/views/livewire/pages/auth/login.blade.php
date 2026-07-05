@@ -1,6 +1,8 @@
 <?php
 
 use App\Livewire\Forms\LoginForm;
+use App\Support\GuardSession;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
@@ -13,32 +15,21 @@ new #[Layout('layouts.guest')] class extends Component
     {
         $this->validate();
 
-        $this->form->authenticate();
+        $user = $this->form->validateCredentials();
 
-        if (auth()->user()->role === 'nss_personnel') {
-            Illuminate\Support\Facades\Auth::logout();
+        if ($user->role !== 'company_admin') {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'form.email' => 'NSS Personnel must login through the designated portal.',
+                'form.email' => GuardSession::wrongPortalMessage($user->role, 'company.login'),
             ]);
         }
 
+        Auth::guard('company')->login($user, $this->form->remember);
         Session::regenerate();
+        session()->forget('url.intended');
 
-        $user = auth()->user();
+        cookie()->queue(GuardSession::portalCookie('company'));
 
-        if ($user->must_change_password) {
-            $this->redirectIntended(default: route('profile', absolute: false), navigate: true);
-            return;
-        }
-
-        $route = match($user->role) {
-            'super_admin' => 'admin.dashboard',
-            'company_admin', 'hr_staff' => 'company.dashboard',
-            'nss_personnel' => 'personnel.dashboard',
-            default => 'dashboard',
-        };
-
-        $this->redirectIntended(default: route($route, absolute: false), navigate: true);
+        $this->redirect(route('company.dashboard', absolute: false));
     }
 }; ?>
 
@@ -46,8 +37,8 @@ new #[Layout('layouts.guest')] class extends Component
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
     <div class="text-center mb-6">
-        <h2 class="text-xl font-bold text-gray-900">Welcome Back</h2>
-        <p class="text-sm text-gray-500 mt-1">Sign in to your account to continue</p>
+        <h2 class="text-xl font-bold text-gray-900">Company Sign In</h2>
+        <p class="text-sm text-gray-500 mt-1">Restricted access</p>
     </div>
 
     <form wire:submit="login" class="space-y-5">
@@ -90,9 +81,11 @@ new #[Layout('layouts.guest')] class extends Component
             @endif
         </div>
 
-        <button type="submit"
-                class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-stormy-600 to-stormy-700 hover:from-stormy-700 hover:to-stormy-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stormy-500 transition-all">
+        <x-loading-button
+            target="login"
+            loading="Signing in..."
+            class="w-full py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-stormy-600 to-stormy-700 hover:from-stormy-700 hover:to-stormy-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stormy-500 transition-all">
             Sign In
-        </button>
+        </x-loading-button>
     </form>
 </div>

@@ -1,10 +1,4 @@
 <div>
-    @if (session('message'))
-        <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl font-semibold text-sm">
-            {{ session('message') }}
-        </div>
-    @endif
-
     <div class="flex items-center justify-between mb-6">
         <div>
             <h2 class="text-xl font-semibold text-gray-900">Companies</h2>
@@ -108,10 +102,10 @@
 
                     <div class="flex justify-end gap-3 pt-2">
                         <button type="button" wire:click="$set('showModal', false)" class="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
-                        <button type="submit"
+                        <x-loading-button target="save" loading="{{ $editingId ? 'Updating...' : 'Creating...' }}"
                                 class="px-4 py-2 text-sm text-white {{ $editingId ? 'bg-stormy-600 hover:bg-stormy-700' : 'bg-emerald-600 hover:bg-emerald-700' }} rounded-lg">
                             {{ $editingId ? 'Update' : 'Create & Send Login' }}
-                        </button>
+                        </x-loading-button>
                     </div>
                 </form>
             </div>

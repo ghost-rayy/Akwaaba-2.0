@@ -1,11 +1,4 @@
 <div>
-    @if($successMessage)
-        <div class="alert-dismiss bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
-            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            {{ $successMessage }}
-        </div>
-    @endif
-
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center gap-3 mb-6">
@@ -69,18 +62,12 @@
                     @error('nss_year') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <!-- Loading progress bar -->
-                <div wire:loading wire:target="onboard" class="w-full">
-                    <div class="h-1.5 w-full bg-stormy-100 rounded-full overflow-hidden mb-2">
-                        <div class="h-full bg-gradient-to-r from-stormy-500 via-emerald-500 to-stormy-600 rounded-full w-full progress-bar-indeterminate"></div>
-                    </div>
-                    <p class="text-xs text-stormy-600 font-medium text-center">Onboarding personnel and sending email...</p>
-                </div>
-
-                <button type="submit"
-                        class="w-full bg-gradient-to-r from-stormy-600 to-stormy-700 text-white py-2.5 rounded-lg hover:from-stormy-700 hover:to-stormy-700 font-medium text-sm transition-all shadow-sm">
+                <x-loading-button
+                    target="onboard"
+                    loading="Onboarding personnel and sending email..."
+                    class="w-full bg-gradient-to-r from-stormy-600 to-stormy-700 text-white py-2.5 rounded-lg hover:from-stormy-700 hover:to-stormy-700 font-medium text-sm transition-all shadow-sm">
                     Onboard Personnel
-                </button>
+                </x-loading-button>
             </form>
         </div>
 

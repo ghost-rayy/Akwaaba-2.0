@@ -7,10 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Company extends Model
 {
     protected $fillable = [
-        'name', 'email', 'phone', 'location', 'postal_address', 'posting_date',
+        'name', 'logo_path', 'email', 'phone', 'location', 'postal_address', 'posting_date',
         'digital_signature_path', 'stamp_path', 'posting_letter_path', 'registration_number',
         'contact_person', 'is_active',
     ];
+
+    public function logoUrl(): ?string
+    {
+        return $this->logo_path ? asset('storage/'.$this->logo_path) : null;
+    }
 
     public function users()
     {

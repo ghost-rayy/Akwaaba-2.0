@@ -4,14 +4,14 @@ namespace App\Livewire\Personnel;
 
 use App\Models\EducationInfo;
 use App\Models\PersonalInfo;
+use App\Models\University;
+use App\Support\DispatchesToast;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
-use Livewire\WithFileUploads;
 
 class Dashboard extends Component
 {
-    use WithFileUploads;
-
+    use DispatchesToast;
     // Password change
     public $current_password = '';
     public $new_password = '';
@@ -26,20 +26,19 @@ class Dashboard extends Component
     public $region_of_residence;
     public $nss_year;
 
-    public $years = [];
-
     // Step 2: Education Info
-    public $university;
+    public $university = '';
+    public $universityIsOther = false;
     public $city_of_school;
     public $region_of_school;
     public $form_of_education;
     public $programme_of_study;
 
     // Step 3: Documents
-    public $posting_letter;
-    public $passport_photo;
-
-    public $successMessage = '';
+    public $posting_letter_path = null;
+    public $posting_letter_name = null;
+    public $passport_photo_path = null;
+    public $passport_photo_name = null;
 
     public $regions = [
         'Ahafo', 'Ashanti', 'Bono', 'Bono East', 'Central', 'Eastern',
@@ -51,14 +50,12 @@ class Dashboard extends Component
 
     public function mount()
     {
-        $currentYear = (int) date('Y');
-        $this->years = range($currentYear, $currentYear - 10);
         $user = auth()->user();
         $this->nss_number = $user->nss_number ?? '';
         $this->phone = $user->phone ?? '';
         $this->email = $user->email ?? '';
         $this->full_name = $user->name ?? '';
-        $this->nss_year = $user->enrollment?->nss_year ?? (string) $currentYear;
+        $this->nss_year = $user->enrollment?->nss_year ?? '';
 
         if ($info = $user->personalInfo) {
             $this->full_name = $info->full_name;
@@ -71,6 +68,7 @@ class Dashboard extends Component
 
         if ($edu = $user->educationInfo) {
             $this->university = $edu->university;
+            $this->universityIsOther = ! University::where('name', $edu->university)->exists();
             $this->city_of_school = $edu->city_of_school;
             $this->region_of_school = $edu->region_of_school;
             $this->form_of_education = $edu->form_of_education;
@@ -95,7 +93,7 @@ class Dashboard extends Component
             'must_change_password' => false,
         ]);
 
-        $this->successMessage = 'Password changed successfully! Please complete your profile.';
+        $this->toastSuccess('Password changed successfully! Please complete your profile.');
         $this->reset(['current_password', 'new_password', 'new_password_confirmation']);
     }
 
@@ -107,7 +105,6 @@ class Dashboard extends Component
             'email' => 'required|email',
             'place_of_residence' => 'required|string',
             'region_of_residence' => 'required|string',
-            'nss_year' => 'required|string|digits:4',
         ]);
 
         $user = auth()->user();
@@ -124,9 +121,8 @@ class Dashboard extends Component
             ]
         );
 
-        $user->enrollment?->update(['nss_year' => $this->nss_year]);
         $user->update(['name' => $this->full_name, 'form_step' => 1]);
-        $this->successMessage = 'Personal information saved!';
+        $this->toastSuccess('Personal information saved!');
     }
 
     public function saveStep2()
@@ -153,39 +149,36 @@ class Dashboard extends Component
         );
 
         $user->update(['form_step' => 2]);
-        $this->successMessage = 'Education information saved!';
+        $this->toastSuccess('Education information saved!');
     }
 
     public function saveStep3()
     {
         $this->validate([
-            'posting_letter' => 'required|file|mimes:pdf|max:5120',
-            'passport_photo' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+            'posting_letter_path' => 'required|string',
+            'posting_letter_name' => 'required|string',
+            'passport_photo_path' => 'nullable|string',
+            'passport_photo_name' => 'nullable|string',
+        ], [
+            'posting_letter_path.required' => 'Please upload your posting letter and wait until the field turns green.',
         ]);
 
         $user = auth()->user();
         $company = $user->company;
 
-        $letterPath = $this->posting_letter->store('documents/' . $user->id, 'public');
-
-        $photoPath = null;
-        if ($this->passport_photo) {
-            $photoPath = $this->passport_photo->store('documents/' . $user->id, 'public');
-        }
-
         $user->documents()->create([
             'company_id' => $company->id,
             'type' => 'posting_letter',
-            'file_path' => $letterPath,
-            'original_name' => $this->posting_letter->getClientOriginalName(),
+            'file_path' => $this->posting_letter_path,
+            'original_name' => $this->posting_letter_name,
         ]);
 
-        if ($photoPath) {
+        if ($this->passport_photo_path) {
             $user->documents()->create([
                 'company_id' => $company->id,
                 'type' => 'passport',
-                'file_path' => $photoPath,
-                'original_name' => $this->passport_photo->getClientOriginalName(),
+                'file_path' => $this->passport_photo_path,
+                'original_name' => $this->passport_photo_name,
             ]);
         }
 
@@ -193,7 +186,7 @@ class Dashboard extends Component
 
         $user->enrollment?->update(['status' => 'pending_review']);
 
-        $this->successMessage = 'Documents uploaded successfully! You now have full access to the portal.';
+        $this->toastSuccess('Documents uploaded successfully! You now have full access to the portal.');
     }
 
     public function render()
@@ -228,6 +221,7 @@ class Dashboard extends Component
             'endorsedLetter' => $endorsedLetter,
             'evaluations' => $evaluations,
             'recentAttendance' => $recentAttendance,
+            'universities' => University::orderBy('name')->pluck('name')->all(),
         ])->layout('layouts.personnel');
     }
 }

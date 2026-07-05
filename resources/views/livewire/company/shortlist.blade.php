@@ -1,11 +1,4 @@
 <div>
-    @if (session('message'))
-        <div class="alert-dismiss mb-6 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            {{ session('message') }}
-        </div>
-    @endif
-
     <div class="flex items-center justify-between mb-6">
         <div>
             <h2 class="text-xl font-semibold text-gray-900">Shortlist Personnel</h2>
@@ -131,10 +124,10 @@
                             class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                         Cancel
                     </button>
-                    <button wire:click="reject"
+                    <x-loading-button type="button" target="reject" loading="Rejecting..." wire:click="reject"
                             class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
                         Confirm Rejection
-                    </button>
+                    </x-loading-button>
                 </div>
             </div>
         </div>

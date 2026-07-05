@@ -3,10 +3,12 @@
 namespace App\Livewire\Company;
 
 use App\Models\Enrollment;
+use App\Support\DispatchesToast;
 use Livewire\Component;
 
 class Shortlist extends Component
 {
+    use DispatchesToast;
     public $selectedPersonnelId = null;
     public $rejectionReason = '';
     public $confirmingRejection = false;
@@ -23,7 +25,7 @@ class Shortlist extends Component
 
         $enrollment->update(['status' => 'shortlisted']);
 
-        session()->flash('message', 'Personnel shortlisted successfully.');
+        $this->toastSuccess('Personnel shortlisted successfully.');
     }
 
     public function confirmReject($enrollmentId)
@@ -51,7 +53,7 @@ class Shortlist extends Component
         $this->selectedPersonnelId = null;
         $this->rejectionReason = '';
 
-        session()->flash('message', 'Personnel rejected.');
+        $this->toastSuccess('Personnel rejected.');
     }
 
     public function viewLetter($enrollmentId)

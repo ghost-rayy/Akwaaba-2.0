@@ -1,10 +1,4 @@
 <div>
-    @if (session('message'))
-        <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-            {{ session('message') }}
-        </div>
-    @endif
-
     <div class="mb-6">
         <h2 class="text-xl font-semibold">Manage Personnel</h2>
         <p class="text-sm text-gray-500">View, filter, and assign departments to all personnel.</p>
@@ -130,10 +124,10 @@
                             class="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
                         Cancel
                     </button>
-                    <button wire:click="saveDepartment"
+                    <x-loading-button type="button" target="saveDepartment" loading="Saving..." wire:click="saveDepartment"
                             class="px-4 py-2 text-sm text-white bg-stormy-600 rounded-md hover:bg-stormy-700">
                         Save
-                    </button>
+                    </x-loading-button>
                 </div>
             </div>
         </div>

@@ -1,10 +1,4 @@
 <div>
-    @if (session('message'))
-        <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl font-semibold text-sm">
-            {{ session('message') }}
-        </div>
-    @endif
-
     <div class="flex items-center justify-between mb-6">
         <div>
             <h2 class="text-xl font-semibold text-gray-900">Endorsed Posting Letters</h2>
@@ -143,10 +137,10 @@
                             class="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
                         Cancel
                     </button>
-                    <button wire:click="reject"
+                    <x-loading-button type="button" target="reject" loading="Rejecting..." wire:click="reject"
                             class="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700">
                         Reject
-                    </button>
+                    </x-loading-button>
                 </div>
             </div>
         </div>

@@ -19,7 +19,7 @@
                         </svg>
                     </div>
                     <h1 class="text-2xl font-bold text-white">Akwaaba NSS Portal</h1>
-                    <p class="text-stormy-200 text-sm mt-1">National Service Scheme — Enrollment Platform</p>
+                    <p class="text-stormy-200 text-sm mt-1">NSS Onboarding System for National Service Personnel (Company Onboarding)</p>
                 </div>
 
                 <div class="bg-white/95 backdrop-blur shadow-2xl rounded-2xl p-8">

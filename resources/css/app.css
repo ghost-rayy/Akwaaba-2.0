@@ -21,6 +21,11 @@
     display: none !important;
 }
 
+/* Hide wire:loading elements until Livewire activates them (pre-hydration flash) */
+[wire\:loading] {
+    display: none;
+}
+
 @keyframes slide-in-right {
     from {
         transform: translateX(100%);

@@ -117,10 +117,19 @@
                     window.toast = (message, type = 'success') => {
                         this.add(message, type);
                     };
-                    
+
                     window.addEventListener('toast', event => {
-                        this.add(event.detail.message || event.detail[0]?.message || '', event.detail.type || event.detail[0]?.type || 'success');
+                        this.add(
+                            event.detail?.message || event.detail?.[0]?.message || '',
+                            event.detail?.type || event.detail?.[0]?.type || 'success'
+                        );
                     });
+
+                    @if (!empty($pendingToasts))
+                        @foreach ($pendingToasts as $flash)
+                            this.add(@json($flash['message']), @json($flash['type']));
+                        @endforeach
+                    @endif
                 }
              }"
              class="fixed top-4 right-4 z-[100] flex flex-col gap-3 w-full max-w-sm pointer-events-none">
@@ -166,51 +175,20 @@
 
         <script>
             document.addEventListener('livewire:initialized', () => {
-                const observer = new MutationObserver((mutations) => {
-                    mutations.forEach(mutation => {
-                        mutation.addedNodes.forEach(node => {
-                            if (node.nodeType === 1) {
-                                if (node.classList.contains('alert-dismiss')) {
-                                    handleAlertNode(node);
-                                } else {
-                                    node.querySelectorAll('.alert-dismiss').forEach(el => handleAlertNode(el));
-                                }
-                            }
-                        });
-                    });
+                Livewire.on('toast', (payload) => {
+                    const data = Array.isArray(payload) ? payload[0] : payload;
+
+                    if (window.toast && data?.message) {
+                        window.toast(data.message, data.type || 'success');
+                    }
                 });
-                observer.observe(document.body, { childList: true, subtree: true });
 
-                // Scan initial DOM
-                document.querySelectorAll('.alert-dismiss').forEach(el => handleAlertNode(el));
-
-                Livewire.confirm((message, accept, reject) => {
-                    window.showConfirmModal(message, accept, reject);
+                document.addEventListener('livewire-upload-error', () => {
+                    if (window.toast) {
+                        window.toast('File upload failed. Please refresh the page and try again.', 'error');
+                    }
                 });
             });
-
-            function handleAlertNode(el) {
-                if (el._ad) return;
-                el._ad = true;
-                
-                const message = el.textContent.trim();
-                if (message) {
-                    let type = 'success';
-                    if (el.classList.contains('bg-rose-50') || el.classList.contains('bg-red-100') || el.classList.contains('text-rose-700')) {
-                        type = 'error';
-                    } else if (el.classList.contains('bg-amber-50') || el.classList.contains('bg-yellow-50')) {
-                        type = 'warning';
-                    }
-                    
-                    setTimeout(() => {
-                        if (window.toast) {
-                            window.toast(message, type);
-                        }
-                    }, 50);
-                }
-                el.style.display = 'none';
-                el.remove();
-            }
         </script>
     </body>
 </html>
