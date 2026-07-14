@@ -49,7 +49,7 @@ class ManagePersonnel extends Component
         $company = auth()->user()->company;
 
         $query = Enrollment::where('company_id', $company->id)
-            ->with(['user', 'user.personalInfo', 'department']);
+            ->with(['user', 'user.personalInfo', 'user.passportPhoto', 'department']);
 
         if ($this->search) {
             $query->where(function ($q) {
@@ -71,7 +71,7 @@ class ManagePersonnel extends Component
         }
 
         return view('livewire.company.manage-personnel', [
-            'enrollments' => $query->latest()->paginate(15),
+            'enrollments' => $query->latest()->paginate(10),
             'departments' => Department::where('company_id', $company->id)->get(),
             'statuses' => ['pending_forms', 'pending_review', 'shortlisted', 'rejected', 'endorsed', 'validated', 'active', 'completed'],
         ])->layout('layouts.company');

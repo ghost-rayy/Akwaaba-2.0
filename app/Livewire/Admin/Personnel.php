@@ -44,7 +44,7 @@ class Personnel extends Component
         $statuses = ['pending_forms', 'pending_review', 'shortlisted', 'rejected', 'endorsed', 'validated', 'active', 'completed'];
 
         return view('livewire.admin.personnel', [
-            'enrollments' => $query->latest()->paginate(15),
+            'enrollments' => $query->latest()->paginate(10),
             'statuses' => $statuses,
             'companies' => \App\Models\Company::orderBy('name')->get(),
         ])->layout('layouts.admin');

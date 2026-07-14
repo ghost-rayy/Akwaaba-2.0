@@ -1,4 +1,4 @@
-<div>
+<div x-data="{ photoModal: null }">
     <div class="mb-6">
         <h2 class="text-xl font-semibold">Manage Personnel</h2>
         <p class="text-sm text-gray-500">View, filter, and assign departments to all personnel.</p>
@@ -52,7 +52,17 @@
                 @forelse ($enrollments as $e)
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="font-medium">{{ $e->user->name }}</div>
+                            <div class="flex items-center gap-3">
+                                @php $photoUrl = $e->user->profilePhotoUrl(); @endphp
+                                @if ($photoUrl)
+                                    <img src="{{ $photoUrl }}" alt="" @click="photoModal = '{{ $photoUrl }}'" class="w-9 h-9 rounded-full object-cover ring-2 ring-gray-100 cursor-pointer hover:ring-stormy-300 transition-all">
+                                @else
+                                    <div class="w-9 h-9 rounded-full bg-stormy-100 flex items-center justify-center text-xs font-bold text-stormy-700 ring-2 ring-gray-100">
+                                        {{ strtoupper(substr($e->user->name, 0, 1)) }}
+                                    </div>
+                                @endif
+                                <div class="font-medium">{{ $e->user->name }}</div>
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $e->nss_number }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -132,4 +142,34 @@
             </div>
         </div>
     @endif
+
+    {{-- Photo Modal --}}
+    <template x-teleport="body">
+        <div x-show="photoModal" x-cloak
+             @click="photoModal = null"
+             @keydown.escape.window="photoModal = null"
+             class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+             x-transition:enter="transition duration-200 ease-out"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition duration-150 ease-in"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            <div @click.stop
+                 class="relative mx-4"
+                 x-transition:enter="transition duration-200 ease-out"
+                 x-transition:enter-start="scale-75 opacity-0"
+                 x-transition:enter-end="scale-100 opacity-100"
+                 x-transition:leave="transition duration-150 ease-in"
+                 x-transition:leave-start="scale-100 opacity-100"
+                 x-transition:leave-end="scale-75 opacity-0">
+                <img :src="photoModal" alt=""
+                     class="w-48 h-48 rounded-full object-cover ring-4 ring-white shadow-2xl">
+                <button @click="photoModal = null"
+                        class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+    </template>
 </div>

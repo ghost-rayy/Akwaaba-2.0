@@ -6,14 +6,15 @@ use App\Models\EndorsedLetter;
 use App\Models\Enrollment;
 use App\Models\LetterTemplate;
 use App\Support\DispatchesToast;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\LetterEndorsement;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class EndorseLetters extends Component
 {
-    use DispatchesToast, WithFileUploads;
+    use DispatchesToast, WithFileUploads, WithPagination;
 
     public $selectedTemplateId = '';
     public $selectedPersonnel = [];
@@ -222,63 +223,15 @@ class EndorseLetters extends Component
         $user = auth()->user();
         $company = $user->company;
 
-        $template = LetterTemplate::where('company_id', $company->id)
-            ->where('type', 'posting_letter')
-            ->where('is_active', true)
-            ->with('fieldMappings')
-            ->first();
-
-        if (! $template) {
-            $this->toastError('No active posting letter template. Upload and configure field mappings in Settings first.');
-
-            return;
-        }
-
-        if ($template->fieldMappings->isEmpty()) {
-            $this->toastError('Posting letter template has no field mappings. Configure fields in the Letters tab first.');
-
-            return;
-        }
-
-        $enrollment = Enrollment::with('user.personalInfo', 'user.educationInfo')
-            ->where('company_id', $company->id)
-            ->where('status', 'shortlisted')
-            ->findOrFail($enrollmentId);
-
-        $postingDate = now();
-        $startDate = $enrollment->start_date ?? now();
-        $endDate = $enrollment->end_date ?? now()->addYear();
-
-        $enrollment->update([
-            'status' => 'endorsed',
-            'endorsement_date' => $postingDate,
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-        ]);
-
         try {
-            $filePath = $this->generateEndorsedPdf(
-                $enrollment,
-                $company,
-                $template,
-                $company->digital_signature_path,
-                $company->stamp_path,
-            );
+            $enrollment = Enrollment::with('user.personalInfo', 'user.educationInfo')
+                ->where('company_id', $company->id)
+                ->where('status', 'shortlisted')
+                ->findOrFail($enrollmentId);
 
-            EndorsedLetter::create([
-                'enrollment_id' => $enrollment->id,
-                'letter_template_id' => $template->id,
-                'endorsed_by' => $user->id,
-                'generated_file_path' => $filePath,
-                'status' => 'endorsed',
-            ]);
-        } catch (\Exception $e) {
-            $enrollment->update([
-                'status' => 'shortlisted',
-                'endorsement_date' => null,
-            ]);
-
-            $this->toastError('Failed to generate endorsed letter for '.$enrollment->user->name.': '.$e->getMessage());
+            LetterEndorsement::endorse($enrollment, $user, $company);
+        } catch (\Throwable $e) {
+            $this->toastError($e->getMessage());
 
             return;
         }
@@ -286,78 +239,60 @@ class EndorseLetters extends Component
         $this->toastSuccess($enrollment->user->name."'s letter endorsed successfully.");
     }
 
-    protected function generateEndorsedPdf($enrollment, $company, $template, $signaturePath, $stampPath)
+    public function bulkEndorsePersonnel($ids = [])
     {
-        $data = $this->buildFieldData($enrollment, $company, $template);
+        $ids = collect($ids)->filter()->values()->toArray();
 
-        // Get source PDF: personnel's uploaded letter or the company's template letter fallback
-        $postingLetter = $enrollment->user->documents()->where('type', 'posting_letter')->first();
-        $sourcePdfPath = null;
-        if ($postingLetter) {
-            $sourcePdfPath = storage_path('app/public/' . $postingLetter->file_path);
-        }
-        if (!$sourcePdfPath || !file_exists($sourcePdfPath)) {
-            $sourcePdfPath = storage_path('app/public/' . $template->template_file_path);
+        if (empty($ids)) {
+            $this->toastError('No personnel selected.');
+            return;
         }
 
-        if (!file_exists($sourcePdfPath)) {
-            throw new \Exception("Template PDF or uploaded document file not found.");
-        }
+        $user = auth()->user();
+        $company = $user->company;
+        $successCount = 0;
 
-        $pdf = new \setasign\Fpdi\Fpdi('P', 'pt');
-        $pageCount = $pdf->setSourceFile($sourcePdfPath);
-
-        for ($pageNum = 1; $pageNum <= $pageCount; $pageNum++) {
-            $templateId = $pdf->importPage($pageNum);
-            $size = $pdf->getTemplateSize($templateId);
-
-            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-            $pdf->useTemplate($templateId);
-
-            $pageFields = $template->fieldMappings->where('page_number', $pageNum);
-            foreach ($pageFields as $mapping) {
-                // Scale coordinates from canvas viewport scale 1.5 to PDF points
-                $x = $mapping->x / 1.5;
-                $y = $mapping->y / 1.5;
-                $w = $mapping->width / 1.5;
-                $h = $mapping->height / 1.5;
-
-                $fieldKey = $mapping->field_key;
-
-                if ($fieldKey === 'signature' && $signaturePath) {
-                    $sigFullPath = Storage::disk('public')->path($signaturePath);
-                    if (file_exists($sigFullPath)) {
-                        $pdf->Image($sigFullPath, $x, $y, $w, $h);
-                    }
-                } elseif ($fieldKey === 'stamp' && $stampPath) {
-                    $stampFullPath = Storage::disk('public')->path($stampPath);
-                    if (file_exists($stampFullPath)) {
-                        $pdf->Image($stampFullPath, $x, $y, $w, $h);
-                    }
-                } else {
-                    $text = $data[$fieldKey] ?? '';
-                    $pdf->SetFont('Arial', '', $mapping->font_size ?? 12);
-                    $pdf->SetXY($x, $y);
-
-                    $align = 'L';
-                    if ($mapping->text_alignment === 'center') $align = 'C';
-                    if ($mapping->text_alignment === 'right') $align = 'R';
-
-                    $pdf->Cell($w, $h, $text, 0, 0, $align);
-                }
+        foreach ($ids as $id) {
+            try {
+                $enrollment = Enrollment::with('user.personalInfo', 'user.educationInfo')
+                    ->where('company_id', $company->id)
+                    ->where('status', 'shortlisted')
+                    ->findOrFail($id);
+                LetterEndorsement::endorse($enrollment, $user, $company);
+                $successCount++;
+            } catch (\Throwable $e) {
+                $this->toastError('Failed for enrollment #'.$id.': '.$e->getMessage());
             }
         }
 
-        $fileName = 'endorsed_letter_' . $enrollment->nss_number . '_' . now()->format('YmdHis') . '.pdf';
-        $filePath = 'endorsed_letters/' . $company->id . '/' . $fileName;
+        if ($successCount > 0) {
+            $this->toastSuccess("{$successCount} personnel endorsed successfully.");
+        }
+    }
 
-        // Ensure directory exists
-        Storage::disk('public')->makeDirectory('endorsed_letters/' . $company->id);
+    public function reEndorse($letterId)
+    {
+        $user = auth()->user();
+        $company = $user->company;
 
-        $destPath = Storage::disk('public')->path($filePath);
-        $pdf->Output('F', $destPath);
+        try {
+            $letter = EndorsedLetter::whereHas('enrollment', function ($q) use ($company) {
+                $q->where('company_id', $company->id);
+            })->with('enrollment.user')->findOrFail($letterId);
 
-        return $filePath;
+            LetterEndorsement::reEndorse($letter, $user, $company);
+        } catch (\Throwable $e) {
+            $this->toastError($e->getMessage());
+
+            return;
+        }
+
+        $this->toastSuccess($letter->enrollment->user->name."'s letter re-endorsed. Personnel can download the updated PDF.");
+    }
+
+    protected function generateEndorsedPdf($enrollment, $company, $template, $signaturePath, $stampPath)
+    {
+        return LetterEndorsement::generatePdf($enrollment, $company, $template, $signaturePath, $stampPath);
     }
 
     public function render()
@@ -367,12 +302,12 @@ class EndorseLetters extends Component
         return view('livewire.company.endorse-letters', [
             'shortlistedPersonnel' => Enrollment::where('company_id', $company->id)
                 ->where('status', 'shortlisted')
-                ->with(['user', 'user.personalInfo', 'department'])
+                ->with(['user.passportPhoto', 'user.personalInfo', 'department'])
                 ->latest()
-                ->get(),
+                ->paginate(10, pageName: 'shortlistedPage'),
             'endorsedLetters' => EndorsedLetter::whereHas('enrollment', function ($q) use ($company) {
                 $q->where('company_id', $company->id);
-            })->with(['enrollment.user', 'enrollment.department'])->latest()->get(),
+            })->with(['enrollment.user.passportPhoto', 'enrollment.department'])->latest('updated_at')->paginate(10, pageName: 'endorsedPage'),
         ])->layout('layouts.company');
     }
 }

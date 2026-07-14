@@ -24,7 +24,7 @@
                                 <div>
                                     <h3 class="font-bold text-gray-900 text-base">Endorsed Posting Letter</h3>
                                     <p class="text-xs text-gray-400 mt-0.5">
-                                        {{ $letter->created_at->format('d M Y, h:i A') }}
+                                        Updated {{ $letter->updated_at->format('d M Y, h:i A') }}
                                     </p>
                                 </div>
                             </div>
@@ -54,7 +54,7 @@
                     </div>
 
                     <div class="space-y-4">
-                        <a href="{{ Storage::url($letter->generated_file_path) }}" target="_blank"
+                        <a href="{{ Storage::url($letter->generated_file_path) }}?v={{ $letter->updated_at->timestamp }}" target="_blank"
                            class="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-stormy-600 to-stormy-700 hover:from-stormy-700 hover:to-stormy-800 text-white font-bold py-2.5 px-4 rounded-xl shadow-sm transition-all text-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Download Endorsed PDF

@@ -192,37 +192,35 @@
 
     {{-- Department Distribution Chart --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        <h3 class="text-sm font-bold text-gray-900 mb-6">Department Distribution</h3>
+        <h3 class="text-sm font-bold text-gray-900 mb-4">Department Distribution</h3>
         @if ($departmentDistribution->isEmpty())
             <div class="text-center py-12 text-gray-400 text-sm">No departments created yet.</div>
         @else
             @php
-                $maxCount = $departmentDistribution->max('enrollments_count') ?: 1;
+                $sorted = $departmentDistribution->sortByDesc('enrollments_count');
+                $maxCount = $sorted->max('enrollments_count') ?: 1;
             @endphp
-            <div class="flex items-end justify-around h-64 pt-6 border-b border-gray-100 px-4 pb-2">
-                @foreach ($departmentDistribution as $dept)
+            {{-- grid-template-columns: max-content 1fr auto
+                 The first column stretches to the widest label automatically,
+                 so every bar starts at exactly the same x position. --}}
+            <div style="display: grid; grid-template-columns: max-content 1fr auto; row-gap: 1rem; column-gap: 0.75rem; align-items: center;">
+                @foreach ($sorted as $dept)
                     @php
-                        $pct = ($dept->enrollments_count / $maxCount) * 100;
-                        // Minimum height of 4% for visual baseline, scale to fill available space
-                        $height = $dept->enrollments_count > 0 ? max($pct, 8) : 4;
+                        $pct  = ($dept->enrollments_count / $maxCount) * 100;
+                        $width = $dept->enrollments_count > 0 ? max($pct, 3) : 2;
                     @endphp
-                    <div class="flex flex-col items-center w-full max-w-[100px] group">
-                        {{-- Value Label --}}
-                        <span class="text-xs font-bold text-gray-700 mb-2 transition-transform group-hover:scale-110">
-                            {{ $dept->enrollments_count }}
-                        </span>
-                        {{-- Bar --}}
-                        <div class="w-10 bg-gray-100 rounded-t-lg relative overflow-hidden transition-all duration-500 ease-out hover:shadow-md" style="height: {{ $height * 1.6 }}px;">
-                            {{-- Active/Value Bar --}}
-                            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-stormy-600 to-stormy-400 rounded-t-lg transition-all duration-500"
-                                 style="height: {{ $dept->enrollments_count > 0 ? '100%' : '10%' }}">
-                            </div>
-                        </div>
-                        {{-- Dept Name --}}
-                        <span class="text-[10px] font-semibold text-gray-500 mt-3 text-center leading-tight truncate w-full" title="{{ $dept->name }}">
-                            {{ $dept->name }}
-                        </span>
+
+                    {{-- Label --}}
+                    <span class="text-[11px] font-medium text-gray-500 whitespace-nowrap">{{ $dept->name }}</span>
+
+                    {{-- Bar track --}}
+                    <div class="relative h-5 rounded-full bg-gray-100 overflow-hidden">
+                        <div class="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-stormy-600 to-stormy-400 transition-all duration-500 ease-out"
+                             style="width: {{ $width }}%"></div>
                     </div>
+
+                    {{-- Count --}}
+                    <span class="text-right text-xs font-bold text-gray-700 tabular-nums">{{ $dept->enrollments_count }}</span>
                 @endforeach
             </div>
         @endif

@@ -91,6 +91,21 @@ class User extends Authenticatable
         return $this->hasMany(Document::class);
     }
 
+    public function passportPhoto()
+    {
+        return $this->hasOne(Document::class)->ofMany(
+            ['id' => 'max'],
+            fn ($query) => $query->where('type', 'passport')
+        );
+    }
+
+    public function profilePhotoUrl(): ?string
+    {
+        $path = $this->passportPhoto?->file_path;
+
+        return $path ? asset('storage/'.$path) : null;
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->role === 'super_admin';

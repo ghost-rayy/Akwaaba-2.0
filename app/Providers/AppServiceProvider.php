@@ -18,7 +18,7 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
-        \Illuminate\Support\Facades\View::composer('layouts.app', function ($view) {
+        \Illuminate\Support\Facades\View::composer(['layouts.app', 'layouts.company'], function ($view) {
             $view->with('pendingToasts', \App\Support\FlashToast::pending());
         });
 

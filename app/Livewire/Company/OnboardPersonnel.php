@@ -10,10 +10,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class OnboardPersonnel extends Component
 {
-    use DispatchesToast;
+    use DispatchesToast, WithPagination;
     public $nss_number = '';
     public $email = '';
     public $phone = '';
@@ -50,6 +51,11 @@ class OnboardPersonnel extends Component
             'phone.digits' => 'Phone number must be exactly 10 digits.',
             'phone.unique' => 'This phone number is already in use.',
         ];
+    }
+
+    public function updatedPhone(?string $value): void
+    {
+        $this->phone = substr(preg_replace('/\D/', '', (string) $value), 0, 10);
     }
 
     public function onboard()
@@ -98,8 +104,7 @@ class OnboardPersonnel extends Component
                 ? Enrollment::where('company_id', $company->id)
                     ->with('user')
                     ->latest()
-                    ->take(10)
-                    ->get()
+                    ->paginate(10)
                 : collect(),
         ])->layout('layouts.company');
     }

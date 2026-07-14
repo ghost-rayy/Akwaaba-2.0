@@ -2,24 +2,46 @@
 
 namespace App\Livewire\Company;
 
+use App\Mail\HrStaffOnboardedMail;
+use App\Models\User;
 use App\Support\DispatchesToast;
-use Livewire\Component;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Livewire\Component;
 
 class Settings extends Component
 {
     use DispatchesToast;
+
     public $name;
+
     public $email;
+
     public $phone;
+
     public $location;
+
     public $postal_address;
+
     public $registration_number;
+
     public $contact_person;
+
     public $posting_date;
+
     public $current_password;
+
     public $new_password;
+
     public $new_password_confirmation;
+
+    public $hr_name = '';
+
+    public $hr_email = '';
+
+    public $hr_phone = '';
 
     public function mount()
     {
@@ -77,8 +99,98 @@ class Settings extends Component
         $this->toastSuccess('Password changed.');
     }
 
+    public function updatedHrPhone(?string $value): void
+    {
+        $this->hr_phone = substr(preg_replace('/\D/', '', (string) $value), 0, 10);
+    }
+
+    public function createHrStaff()
+    {
+        $companyId = auth()->user()->company_id;
+
+        $this->validate([
+            'hr_name' => 'required|string|max:255',
+            'hr_email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email'),
+            ],
+            'hr_phone' => [
+                'required',
+                'digits:10',
+                Rule::unique('users', 'phone'),
+            ],
+        ], [
+            'hr_name.required' => 'Name is required.',
+            'hr_email.required' => 'Email is required.',
+            'hr_email.unique' => 'This email is already in use.',
+            'hr_phone.required' => 'Phone number is required.',
+            'hr_phone.digits' => 'Phone number must be exactly 10 digits.',
+            'hr_phone.unique' => 'This phone number is already in use.',
+        ]);
+
+        $password = Str::random(10);
+
+        $hr = User::create([
+            'name' => $this->hr_name,
+            'email' => $this->hr_email,
+            'phone' => $this->hr_phone,
+            'password' => Hash::make($password),
+            'role' => 'hr_staff',
+            'company_id' => $companyId,
+            'must_change_password' => true,
+        ]);
+
+        Mail::to($hr->email)->send(new HrStaffOnboardedMail($hr, $password));
+
+        $this->reset(['hr_name', 'hr_email', 'hr_phone']);
+
+        $this->toastSuccess("HR staff created. Login credentials sent to {$hr->email}.");
+    }
+
+    public function resetHrPassword(int $userId)
+    {
+        $hr = $this->hrStaffQuery()->findOrFail($userId);
+        $password = Str::random(10);
+
+        $hr->update([
+            'password' => Hash::make($password),
+            'must_change_password' => true,
+        ]);
+
+        Mail::to($hr->email)->send(new HrStaffOnboardedMail($hr, $password, isPasswordReset: true));
+
+        $this->toastSuccess("New temporary password sent to {$hr->email}.");
+    }
+
+    public function removeHrStaff(int $userId)
+    {
+        $hr = $this->hrStaffQuery()->findOrFail($userId);
+
+        if ($hr->headedDepartments()->exists() || $hr->supervisedDepartments()->exists()) {
+            $this->toastError('This HR staff is assigned to a department. Reassign department heads/supervisors first.');
+
+            return;
+        }
+
+        $email = $hr->email;
+        $hr->delete();
+
+        $this->toastSuccess("HR staff {$email} removed.");
+    }
+
+    protected function hrStaffQuery()
+    {
+        return User::query()
+            ->where('company_id', auth()->user()->company_id)
+            ->where('role', 'hr_staff');
+    }
+
     public function render()
     {
-        return view('livewire.company.settings')->layout('layouts.company');
+        return view('livewire.company.settings', [
+            'hrStaff' => $this->hrStaffQuery()->orderBy('name')->get(),
+        ])->layout('layouts.company');
     }
 }

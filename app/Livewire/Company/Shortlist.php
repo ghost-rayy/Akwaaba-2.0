@@ -5,10 +5,11 @@ namespace App\Livewire\Company;
 use App\Models\Enrollment;
 use App\Support\DispatchesToast;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Shortlist extends Component
 {
-    use DispatchesToast;
+    use DispatchesToast, WithPagination;
     public $selectedPersonnelId = null;
     public $rejectionReason = '';
     public $confirmingRejection = false;
@@ -26,6 +27,24 @@ class Shortlist extends Component
         $enrollment->update(['status' => 'shortlisted']);
 
         $this->toastSuccess('Personnel shortlisted successfully.');
+    }
+
+    public function bulkShortlist($ids = [])
+    {
+        $ids = collect($ids)->filter()->values()->toArray();
+
+        if (empty($ids)) {
+            $this->toastError('No personnel selected.');
+            return;
+        }
+
+        Enrollment::where('company_id', auth()->user()->company_id)
+            ->whereIn('id', $ids)
+            ->where('status', 'pending_review')
+            ->update(['status' => 'shortlisted']);
+
+        $count = count($ids);
+        $this->toastSuccess("{$count} personnel shortlisted successfully.");
     }
 
     public function confirmReject($enrollmentId)
@@ -83,9 +102,9 @@ class Shortlist extends Component
         return view('livewire.company.shortlist', [
             'pendingPersonnel' => Enrollment::where('company_id', $company->id)
                 ->where('status', 'pending_review')
-                ->with(['user', 'user.personalInfo', 'department'])
+                ->with(['user.passportPhoto', 'user.personalInfo', 'department'])
                 ->latest()
-                ->get(),
+                ->paginate(10),
             'processedCount' => Enrollment::where('company_id', $company->id)
                 ->whereIn('status', ['shortlisted', 'rejected'])
                 ->count(),

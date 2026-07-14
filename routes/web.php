@@ -16,6 +16,7 @@ use App\Livewire\Company\ManagePersonnel as CompanyManagePersonnel;
 use App\Livewire\Company\OnboardPersonnel as CompanyOnboard;
 use App\Livewire\Company\Report as CompanyReport;
 use App\Livewire\Company\Settings as CompanySettings;
+use App\Livewire\Company\Dms as CompanyDms;
 use App\Livewire\Company\Shortlist as CompanyShortlist;
 use App\Livewire\Personnel\Attendance as PersonnelAttendance;
 use App\Livewire\Personnel\Dashboard as PersonnelDashboard;
@@ -25,6 +26,15 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/login')->name('home');
 
 Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function () {
+    Route::post('/logout', function () {
+        $user = auth('admin')->user();
+        app(\App\Livewire\Actions\Logout::class)('admin');
+
+        return redirect()->route(
+            \App\Support\GuardSession::loginRouteForUser($user)
+        );
+    })->name('logout');
+
     Route::middleware('role:super_admin')->group(function () {
         Route::get('/dashboard', AdminDashboard::class)->name('dashboard');
         Route::get('/companies', AdminCompanies::class)->name('companies');
@@ -34,6 +44,15 @@ Route::middleware('auth:admin')->prefix('admin')->name('admin.')->group(function
 });
 
 Route::middleware('auth:company')->prefix('company')->name('company.')->group(function () {
+    Route::post('/logout', function () {
+        $user = auth('company')->user();
+        app(\App\Livewire\Actions\Logout::class)('company');
+
+        return redirect()->route(
+            \App\Support\GuardSession::loginRouteForUser($user)
+        );
+    })->name('logout');
+
     Route::middleware('role:company_admin,hr_staff')->group(function () {
         Route::get('/dashboard', CompanyDashboard::class)->name('dashboard');
         Route::get('/onboard', CompanyOnboard::class)->name('onboard');
@@ -44,6 +63,7 @@ Route::middleware('auth:company')->prefix('company')->name('company.')->group(fu
         Route::get('/evaluations', CompanyEvaluation::class)->name('evaluations');
         Route::get('/reports', CompanyReport::class)->name('reports');
         Route::get('/letters', CompanyLetters::class)->name('letters');
+        Route::get('/dms', CompanyDms::class)->name('dms');
         Route::view('profile', 'profile')->name('profile');
 
         Route::middleware('role:company_admin')->group(function () {
@@ -59,6 +79,15 @@ Route::middleware('auth:company')->prefix('company')->name('company.')->group(fu
 });
 
 Route::middleware('auth:personnel')->prefix('personnel')->name('personnel.')->group(function () {
+    Route::post('/logout', function () {
+        $user = auth('personnel')->user();
+        app(\App\Livewire\Actions\Logout::class)('personnel');
+
+        return redirect()->route(
+            \App\Support\GuardSession::loginRouteForUser($user)
+        );
+    })->name('logout');
+
     Route::middleware('role:nss_personnel')->group(function () {
         Route::get('/dashboard', PersonnelDashboard::class)->name('dashboard');
         Route::view('profile', 'profile')->name('profile');

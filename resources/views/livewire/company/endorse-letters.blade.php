@@ -1,4 +1,4 @@
-<div>
+<div x-data="{ selected: @js($shortlistedPersonnel->pluck('id')) }" x-init="selected = []">
     @if ($errors->any())
         <div class="mb-4 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl">
             <ul class="list-disc pl-4 text-sm font-semibold">
@@ -15,8 +15,8 @@
             <p class="text-sm text-gray-500 mt-1">Review, reject, or endorse posting letters for shortlisted personnel.</p>
         </div>
         <div class="flex items-center gap-3">
-            <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">{{ $endorsedLetters->count() }} endorsed</span>
-            <span class="bg-stormy-50 text-stormy-700 text-sm font-medium px-3 py-1.5 rounded-lg">{{ $shortlistedPersonnel->count() }} pending endorsement</span>
+            <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">{{ $endorsedLetters->total() }} endorsed</span>
+            <span class="bg-stormy-50 text-stormy-700 text-sm font-medium px-3 py-1.5 rounded-lg">{{ $shortlistedPersonnel->total() }} pending endorsement</span>
         </div>
     </div>
 
@@ -31,22 +31,50 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead>
                     <tr class="bg-gray-50">
+                        <th class="px-4 py-4 w-10">
+                            <input type="checkbox"
+                                   :checked="selected.length === {{ $shortlistedPersonnel->count() }}"
+                                   @click="
+                                       if ($event.target.checked) {
+                                           selected = {{ $shortlistedPersonnel->pluck('id')->toJson() }}
+                                       } else {
+                                           selected = []
+                                       }
+                                   "
+                                   class="rounded border-gray-300 text-stormy-600 shadow-sm focus:ring-stormy-500">
+                        </th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">NSS #</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Department</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Posting Letter</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <span x-show="!selected.length">Actions</span>
+                            <div x-show="selected.length" class="inline-flex items-center gap-2">
+                                <span class="text-stormy-700 bg-stormy-100 px-2 py-0.5 rounded text-xs font-bold" x-text="selected.length"></span>
+                                <x-loading-button type="button" target="bulkEndorsePersonnel" loading="Endorsing..."
+                                                  @click="selected = await $wire.bulkEndorsePersonnel(selected); if (selected === undefined) selected = []"
+                                                  class="inline-flex items-center gap-1 bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 text-xs font-medium transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    Endorse Selected
+                                </x-loading-button>
+                                <button @click="selected = []" class="text-gray-400 hover:text-gray-600 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @foreach ($shortlistedPersonnel as $enrollment)
-                        <tr class="hover:bg-gray-50 transition-colors">
+                        <tr class="hover:bg-gray-50 transition-colors" wire:key="row-{{ $enrollment->id }}">
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <input type="checkbox" x-model="selected" value="{{ $enrollment->id }}"
+                                       class="rounded border-gray-300 text-stormy-600 shadow-sm focus:ring-stormy-500">
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 bg-stormy-100 rounded-full flex items-center justify-center">
-                                        <span class="text-sm font-bold text-stormy-600">{{ substr($enrollment->user->name, 0, 1) }}</span>
-                                    </div>
+                                    <x-personnel-avatar :user="$enrollment->user" />
                                     <div class="font-medium text-gray-900">{{ $enrollment->user->name }}</div>
                                 </div>
                             </td>
@@ -111,6 +139,7 @@
                 </tbody>
             </table>
         </div>
+        <div class="mt-4">{{ $shortlistedPersonnel->links(data: ['pageName' => 'shortlistedPage']) }}</div>
     @endif
 
     {{-- Endorsed Letters History --}}
@@ -126,7 +155,7 @@
                         <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">NSS #</th>
                         <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Date</th>
                         <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Validated Letter</th>
-                        <th class="px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">Download</th>
+                        <th class="px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -137,7 +166,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">{{ $letter->enrollment->nss_number }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $letter->created_at->format('d M Y, h:i A') }}
+                                {{ $letter->updated_at->format('d M Y, h:i A') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                 @if ($letter->validated_file_path)
@@ -164,17 +193,37 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                <a href="{{ Storage::url($letter->generated_file_path) }}" target="_blank"
-                                   class="text-stormy-600 hover:text-stormy-800 font-bold inline-flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                    Download PDF
-                                </a>
+                                <div class="inline-flex items-center justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        wire:click="reEndorse({{ $letter->id }})"
+                                        wire:confirm="Re-endorse {{ $letter->enrollment->user->name }}'s letter with the latest company stamp, signature, and field mappings? This will replace the current PDF on the personnel portal."
+                                        wire:loading.attr="disabled"
+                                        wire:target="reEndorse({{ $letter->id }})"
+                                        class="inline-flex items-center gap-1 bg-amber-50 text-amber-800 px-3 py-1.5 rounded-lg hover:bg-amber-100 text-xs font-medium ring-1 ring-amber-600/20 transition-colors disabled:opacity-70"
+                                    >
+                                        <span wire:loading.remove wire:target="reEndorse({{ $letter->id }})" class="inline-flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                            Re-endorse
+                                        </span>
+                                        <span wire:loading wire:target="reEndorse({{ $letter->id }})" style="display: none;" class="inline-flex items-center gap-1">
+                                            <x-loading-spinner class="h-3.5 w-3.5" />
+                                            Re-endorsing...
+                                        </span>
+                                    </button>
+                                    <a href="{{ Storage::url($letter->generated_file_path) }}?v={{ $letter->updated_at->timestamp }}" target="_blank"
+                                       class="text-stormy-600 hover:text-stormy-800 font-bold inline-flex items-center gap-1 text-xs">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                        Download
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
+        <div class="mt-4">{{ $endorsedLetters->links(data: ['pageName' => 'endorsedPage']) }}</div>
     @endif
 
     {{-- Reject Modal --}}

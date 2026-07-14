@@ -4,7 +4,7 @@
             <h2 class="text-xl font-semibold text-gray-900">Endorsed Posting Letters</h2>
             <p class="text-sm text-gray-500 mt-1">Preview endorsed posting letters and validate uploaded letters.</p>
         </div>
-        <span class="bg-stormy-50 text-stormy-700 text-sm font-medium px-3 py-1.5 rounded-lg">{{ $letters->count() }} endorsed</span>
+        <span class="bg-stormy-50 text-stormy-700 text-sm font-medium px-3 py-1.5 rounded-lg">{{ $letters->total() }} endorsed</span>
     </div>
 
     @if ($letters->isEmpty())
@@ -31,9 +31,7 @@
                         <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 bg-stormy-100 rounded-full flex items-center justify-center">
-                                        <span class="text-sm font-bold text-stormy-600">{{ substr($letter->enrollment->user->name, 0, 1) }}</span>
-                                    </div>
+                                    <x-personnel-avatar :user="$letter->enrollment->user" />
                                     <div class="font-medium text-gray-900">{{ $letter->enrollment->user->name }}</div>
                                 </div>
                             </td>
@@ -73,6 +71,20 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
+                                <button
+                                    type="button"
+                                    wire:click="reEndorse({{ $letter->id }})"
+                                    wire:confirm="Re-endorse {{ $letter->enrollment->user->name }}'s letter with the latest company stamp, signature, and field mappings? This will replace the current PDF on the personnel portal."
+                                    wire:loading.attr="disabled"
+                                    wire:target="reEndorse({{ $letter->id }})"
+                                    class="inline-flex items-center gap-1 text-amber-700 hover:text-amber-900 font-semibold hover:underline disabled:opacity-70"
+                                >
+                                    <span wire:loading.remove wire:target="reEndorse({{ $letter->id }})">Re-endorse</span>
+                                    <span wire:loading wire:target="reEndorse({{ $letter->id }})" style="display: none;" class="inline-flex items-center gap-1">
+                                        <x-loading-spinner class="h-3.5 w-3.5" />
+                                        Re-endorsing...
+                                    </span>
+                                </button>
                                 <button wire:click="preview({{ $letter->id }})"
                                         class="inline-flex items-center gap-1 text-stormy-600 hover:text-stormy-800 font-semibold hover:underline">
                                     Preview
@@ -93,6 +105,7 @@
                 </tbody>
             </table>
         </div>
+        <div class="mt-4">{{ $letters->links() }}</div>
     @endif
 
     {{-- Preview Modal --}}

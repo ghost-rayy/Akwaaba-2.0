@@ -5,10 +5,11 @@ namespace App\Livewire\Personnel;
 use App\Models\Attendance as AttendanceModel;
 use App\Support\DispatchesToast;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Attendance extends Component
 {
-    use DispatchesToast;
+    use DispatchesToast, WithPagination;
 
     public $todayRecord;
     public $checkedIn = false;
@@ -185,8 +186,7 @@ class Attendance extends Component
 
         $history = AttendanceModel::where('user_id', $user->id)
             ->latest('date')
-            ->take(30)
-            ->get();
+            ->paginate(10);
 
         $stats = [
             'present' => AttendanceModel::where('user_id', $user->id)->where('status', 'present')->whereNotNull('check_in_validated_at')->count(),

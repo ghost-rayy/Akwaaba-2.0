@@ -15,13 +15,16 @@ class Dashboard extends Component
         $user = auth()->user();
         $company = $user->company;
 
-        $enrollments = $company?->enrollments();
+        $statusCounts = Enrollment::where('company_id', $company?->id)
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
 
-        $totalPersonnel = $enrollments?->count() ?? 0;
-        $activePersonnel = $enrollments?->whereIn('status', ['validated', 'active'])->count() ?? 0;
-        $pendingReview = $enrollments?->where('status', 'pending_review')->count() ?? 0;
-        $shortlisted = $enrollments?->where('status', 'shortlisted')->count() ?? 0;
-        $endorsed = $enrollments?->where('status', 'endorsed')->count() ?? 0;
+        $totalPersonnel = $statusCounts->sum();
+        $activePersonnel = (int) ($statusCounts['validated'] ?? 0) + (int) ($statusCounts['active'] ?? 0);
+        $pendingReview = (int) ($statusCounts['pending_review'] ?? 0);
+        $shortlisted = (int) ($statusCounts['shortlisted'] ?? 0);
+        $endorsed = (int) ($statusCounts['endorsed'] ?? 0);
         $totalDepartments = $company?->departments()->count() ?? 0;
 
         $todayPresent = Attendance::where('company_id', $company?->id)

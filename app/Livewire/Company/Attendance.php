@@ -162,7 +162,7 @@ class Attendance extends Component
     public function render()
     {
         $dailyQuery = $this->applySort($this->applySearch($this->baseQuery()));
-        $records = $dailyQuery->paginate(15);
+        $records = $dailyQuery->paginate(10);
 
         $historyQuery = AttendanceModel::query()
             ->where('company_id', auth()->user()->company_id)
@@ -174,7 +174,7 @@ class Attendance extends Component
             ->with(['user.enrollment']);
 
         $historyQuery = $this->applySearch($historyQuery);
-        $history = $this->applySort($historyQuery)->limit(50)->get();
+        $history = $this->applySort($historyQuery)->paginate(10, pageName: 'historyPage');
 
         $pendingCount = AttendanceModel::where('company_id', auth()->user()->company_id)
             ->where(function ($query) {

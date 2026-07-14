@@ -105,6 +105,7 @@ class CompanyNavCounters
             'company.evaluations' => $dueEvaluations,
             'company.reports' => 0,
             'company.letters' => 0,
+            'company.dms' => 0,
             'company.departments' => $departmentsWithoutHead,
             'company.settings' => $settingsTodo,
         ];
@@ -122,6 +123,7 @@ class CompanyNavCounters
             'company.evaluations',
             'company.reports',
             'company.letters',
+            'company.dms',
             'company.departments',
             'company.settings',
         ], 0);

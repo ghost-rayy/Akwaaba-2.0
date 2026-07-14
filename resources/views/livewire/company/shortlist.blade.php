@@ -1,4 +1,4 @@
-<div>
+<div x-data="{ selected: @js($pendingPersonnel->pluck('id')) }" x-init="selected = []">
     <div class="flex items-center justify-between mb-6">
         <div>
             <h2 class="text-xl font-semibold text-gray-900">Shortlist Personnel</h2>
@@ -6,7 +6,7 @@
         </div>
         <div class="flex items-center gap-3">
             <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">{{ $processedCount }} already processed</span>
-            <span class="bg-stormy-50 text-stormy-700 text-sm font-medium px-3 py-1.5 rounded-lg">{{ $pendingPersonnel->count() }} pending</span>
+            <span class="bg-stormy-50 text-stormy-700 text-sm font-medium px-3 py-1.5 rounded-lg">{{ $pendingPersonnel->total() }} pending</span>
         </div>
     </div>
 
@@ -21,22 +21,50 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead>
                     <tr class="bg-gray-50">
+                        <th class="px-4 py-4 w-10">
+                            <input type="checkbox"
+                                   :checked="selected.length === {{ $pendingPersonnel->count() }}"
+                                   @click="
+                                       if ($event.target.checked) {
+                                           selected = {{ $pendingPersonnel->pluck('id')->toJson() }}
+                                       } else {
+                                           selected = []
+                                       }
+                                   "
+                                   class="rounded border-gray-300 text-stormy-600 shadow-sm focus:ring-stormy-500">
+                        </th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">NSS #</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Department</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Posting Letter</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <span x-show="!selected.length">Actions</span>
+                            <div x-show="selected.length" class="inline-flex items-center gap-2">
+                                <span class="text-stormy-700 bg-stormy-100 px-2 py-0.5 rounded text-xs font-bold" x-text="selected.length"></span>
+                                <x-loading-button type="button" target="bulkShortlist" loading="Shortlisting..."
+                                                  @click="selected = await $wire.bulkShortlist(selected); if (selected === undefined) selected = []"
+                                                  class="inline-flex items-center gap-1 bg-stormy-600 text-white px-3 py-1.5 rounded-lg hover:bg-stormy-700 text-xs font-medium transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Shortlist Selected
+                                </x-loading-button>
+                                <button @click="selected = []" class="text-gray-400 hover:text-gray-600 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @foreach ($pendingPersonnel as $enrollment)
-                        <tr class="hover:bg-gray-50 transition-colors">
+                        <tr class="hover:bg-gray-50 transition-colors" wire:key="row-{{ $enrollment->id }}">
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <input type="checkbox" x-model="selected" value="{{ $enrollment->id }}"
+                                       class="rounded border-gray-300 text-stormy-600 shadow-sm focus:ring-stormy-500">
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 bg-stormy-100 rounded-full flex items-center justify-center">
-                                        <span class="text-sm font-bold text-stormy-600">{{ substr($enrollment->user->name, 0, 1) }}</span>
-                                    </div>
+                                    <x-personnel-avatar :user="$enrollment->user" />
                                     <div class="font-medium text-gray-900">{{ $enrollment->user->name }}</div>
                                 </div>
                             </td>
@@ -85,6 +113,7 @@
                 </tbody>
             </table>
         </div>
+        <div class="mt-4">{{ $pendingPersonnel->links() }}</div>
     @endif
 
     {{-- Letter Viewer Modal --}}

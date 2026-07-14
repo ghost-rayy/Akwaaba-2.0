@@ -1,48 +1,212 @@
-<x-app-layout>
-    @php $user = auth()->user(); @endphp
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ config('app.name') }} @hasSection('title') — @yield('title') @endif</title>
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body class="font-sans antialiased bg-gray-50">
+@php
+    $user = auth()->user();
+    $company = $user->company;
+    $logoUrl = $company?->logo_path ? asset('storage/'.$company->logo_path) : null;
 
-    <div class="bg-white border-b border-gray-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav class="flex space-x-1 overflow-x-auto py-2" aria-label="Tabs">
-                @php
-                    $tabs = [
-                        ['route' => 'company.dashboard', 'label' => 'Dashboard', 'badge' => false, 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
-                        ['route' => 'company.onboard', 'label' => 'Onboard', 'badge' => false, 'icon' => 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z'],
-                        ['route' => 'company.shortlist', 'label' => 'Shortlist', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
-                        ['route' => 'company.endorse', 'label' => 'Endorse', 'admin' => true, 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
-                        ['route' => 'company.personnel', 'label' => 'Personnel', 'badge' => false, 'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'],
-                        ['route' => 'company.attendance', 'label' => 'Attendance', 'badge' => false, 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'],
-                        ['route' => 'company.evaluations', 'label' => 'Evaluations', 'badge' => false, 'icon' => 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'],
-                        ['route' => 'company.reports', 'label' => 'Reports', 'icon' => 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
-                        ['route' => 'company.letters', 'label' => 'Letters', 'badge' => false, 'icon' => 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'],
-                        ['route' => 'company.departments', 'label' => 'Departments', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
-                        ['route' => 'company.settings', 'label' => 'Settings', 'admin' => true, 'icon' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z'],
-                    ];
-                @endphp
+    $navGroups = [
+        [
+            'label' => 'Overview',
+            'items' => [
+                ['route' => 'company.dashboard', 'label' => 'Dashboard', 'badge' => false, 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
+            ],
+        ],
+        [
+            'label' => 'Personnel',
+            'items' => [
+                ['route' => 'company.onboard', 'label' => 'Onboard', 'badge' => false, 'icon' => 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z'],
+                ['route' => 'company.shortlist', 'label' => 'Shortlist', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                ['route' => 'company.endorse', 'label' => 'Endorse', 'admin' => true, 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                ['route' => 'company.personnel', 'label' => 'Manage Personnel', 'badge' => false, 'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'],
+            ],
+        ],
+        [
+            'label' => 'Operations',
+            'items' => [
+                ['route' => 'company.attendance', 'label' => 'Attendance', 'badge' => false, 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'],
+                ['route' => 'company.evaluations', 'label' => 'Evaluations', 'badge' => false, 'icon' => 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'],
+                ['route' => 'company.reports', 'label' => 'Reports', 'icon' => 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+            ],
+        ],
+        [
+            'label' => 'Documents',
+            'items' => [
+                ['route' => 'company.dms', 'label' => 'DMS', 'badge' => false, 'icon' => 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z'],
+            ],
+        ],
+        [
+            'label' => 'Workspace',
+            'items' => [
+                ['route' => 'company.letters', 'label' => 'Letters', 'badge' => false, 'icon' => 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'],
+                ['route' => 'company.departments', 'label' => 'Departments', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
+                ['route' => 'company.settings', 'label' => 'Settings', 'admin' => true, 'icon' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z'],
+            ],
+        ],
+    ];
+@endphp
 
-                @foreach ($tabs as $tab)
-                    @if (isset($tab['admin']) && !$user->isCompanyAdmin())
-                        @continue
-                    @endif
-                    <a href="{{ route($tab['route']) }}"
-                       class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors
-                              {{ request()->routeIs($tab['route']) ? 'bg-stormy-50 text-stormy-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100' }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $tab['icon'] }}"/>
+<div
+    x-data="{ sidebarOpen: false }"
+    x-on:keydown.escape.window="sidebarOpen = false"
+    class="relative flex min-h-screen"
+>
+    {{-- Mobile overlay --}}
+    <div
+        x-show="sidebarOpen"
+        x-transition:enter="transition-opacity ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition-opacity ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        @click="sidebarOpen = false"
+        class="fixed inset-0 z-40 bg-stormy-900/40 backdrop-blur-[2px] lg:hidden"
+        style="display: none;"
+        aria-hidden="true"
+    ></div>
+
+    {{-- Sidebar --}}
+    <aside
+        :class="sidebarOpen && 'max-lg:translate-x-0'"
+        class="z-50 flex w-72 shrink-0 flex-col overflow-hidden border-r border-stormy-100 bg-white transition-transform duration-300 ease-out max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:-translate-x-full max-lg:shadow-xl lg:fixed lg:top-0 lg:left-0 lg:z-20 lg:h-screen lg:translate-x-0 lg:shadow-none"
+        aria-label="Company navigation"
+    >
+        <div class="border-b border-stormy-50 px-4 py-4">
+            <a href="{{ route('company.dashboard') }}" wire:navigate class="flex items-center gap-3" @click="sidebarOpen = false">
+                @if ($logoUrl)
+                    <img
+                        src="{{ $logoUrl }}"
+                        alt="{{ $company?->name }} logo"
+                        class="h-10 w-10 shrink-0 rounded-lg border border-gray-200 bg-white object-contain p-0.5"
+                    >
+                @else
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-stormy-500 to-stormy-700">
+                        <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                         </svg>
-                        {{ $tab['label'] }}
-                        @if ($tab['badge'] ?? true)
-                            <x-nav-badge :count="$navCounters[$tab['route']] ?? 0" />
-                        @endif
-                    </a>
-                @endforeach
-            </nav>
+                    </div>
+                @endif
+                <div class="min-w-0">
+                    <p class="truncate text-base font-bold text-gray-900">{{ $company?->name ?? config('app.name') }}</p>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-stormy-400">Company portal</p>
+                </div>
+            </a>
         </div>
-    </div>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            {{ $slot }}
+        <nav class="flex-1 overflow-hidden px-3 py-3 flex flex-col justify-between">
+            <div class="space-y-3">
+            @foreach ($navGroups as $group)
+                @php
+                    $visibleItems = collect($group['items'])->filter(function ($item) use ($user) {
+                        return ! isset($item['admin']) || $user->isCompanyAdmin();
+                    });
+                @endphp
+                @continue($visibleItems->isEmpty())
+
+                <div>
+                    <p class="mb-1 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+                        {{ $group['label'] }}
+                    </p>
+                    <ul class="space-y-0.5">
+                        @foreach ($visibleItems as $item)
+                            @php
+                                $active = request()->routeIs($item['route']);
+                                $count = ($item['badge'] ?? true) ? ($navCounters[$item['route']] ?? 0) : 0;
+                            @endphp
+                            <li>
+                                <a
+                                    href="{{ route($item['route']) }}"
+                                    wire:navigate
+                                    @click="sidebarOpen = false"
+                                    class="group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-all
+                                        {{ $active
+                                            ? 'bg-gradient-to-r from-stormy-600 to-stormy-700 text-white shadow-md shadow-stormy-600/20'
+                                            : 'text-gray-600 hover:bg-stormy-50 hover:text-stormy-800' }}"
+                                >
+                                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg
+                                        {{ $active ? 'bg-white/15 text-white' : 'bg-stormy-50 text-stormy-600 group-hover:bg-white group-hover:text-stormy-700' }}">
+                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}"/>
+                                        </svg>
+                                    </span>
+                                    <span class="flex-1 truncate">{{ $item['label'] }}</span>
+                                    @if ($count > 0)
+                                        <span class="inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none
+                                            {{ $active ? 'bg-white/20 text-white' : 'bg-rose-500 text-white' }}">
+                                            {{ $count > 99 ? '99+' : $count }}
+                                        </span>
+                                    @endif
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endforeach
+            </div>
+        </nav>
+
+        <div class="space-y-1.5 border-t border-stormy-50 p-3">
+            <div class="flex items-center gap-2.5 rounded-xl bg-stormy-50/80 px-3 py-2">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-stormy-100 text-xs font-bold text-stormy-700">
+                    {{ strtoupper(substr($user->name, 0, 1)) }}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-stormy-900">{{ $user->name }}</p>
+                    <p class="truncate text-xs capitalize text-stormy-500">{{ str_replace('_', ' ', $user->role) }}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+                <a
+                    href="{{ route('company.profile') }}"
+                    wire:navigate
+                    @click="sidebarOpen = false"
+                    class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                    Profile
+                </a>
+                <form method="POST" action="{{ route('company.logout') }}">
+                    @csrf
+                    <button
+                        type="submit"
+                        class="w-full inline-flex items-center justify-center rounded-xl border border-rose-100 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                    >
+                        Log out
+                    </button>
+                </form>
+            </div>
         </div>
+    </aside>
+
+    {{-- Main --}}
+    <div class="flex min-w-0 flex-1 flex-col lg:ml-72">
+        <button
+            type="button"
+            @click="sidebarOpen = true"
+            class="fixed bottom-5 left-5 z-30 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-stormy-700 text-white shadow-lg shadow-stormy-700/30 hover:bg-stormy-800 lg:hidden"
+            aria-label="Open menu"
+        >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+
+        <main class="flex-1 py-6">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                {{ $slot }}
+            </div>
+        </main>
     </div>
-</x-app-layout>
+</div>
+
+@include('layouts.partials.app-chrome')
+</body>
+</html>

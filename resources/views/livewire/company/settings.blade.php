@@ -355,5 +355,105 @@
                 </div>
             </form>
         </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="mb-6">
+                <h2 class="text-lg font-semibold text-gray-900">Create and Manage HR Staff</h2>
+                <p class="text-sm text-gray-500 mt-1">Add HR accounts for your company. They sign in at the HR portal and can manage day-to-day personnel workflows.</p>
+            </div>
+
+            <form wire:submit="createHrStaff" class="space-y-4 mb-8 pb-8 border-b border-gray-100">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input wire:model="hr_name" type="text" placeholder="Jane Mensah"
+                               class="w-full rounded-lg border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500 text-sm">
+                        @error('hr_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input wire:model="hr_email" type="email" placeholder="hr@company.com"
+                               class="w-full rounded-lg border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500 text-sm">
+                        @error('hr_email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input wire:model.live="hr_phone" type="text" inputmode="numeric" maxlength="10" placeholder="0244000000"
+                               x-on:input="$el.value = $el.value.replace(/\D/g, '').slice(0, 10)"
+                               class="w-full rounded-lg border-gray-300 shadow-sm focus:border-stormy-500 focus:ring-stormy-500 text-sm">
+                        @error('hr_phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <x-loading-button target="createHrStaff" loading="Creating HR staff..."
+                            class="px-6 py-2.5 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors">
+                        Create HR Staff
+                    </x-loading-button>
+                </div>
+            </form>
+
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Existing HR Staff ({{ $hrStaff->count() }})</h3>
+                @if ($hrStaff->isEmpty())
+                    <p class="text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-200 rounded-lg px-4 py-6 text-center">
+                        No HR staff yet. Create one above to get started.
+                    </p>
+                @else
+                    <div class="overflow-hidden rounded-lg border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Contact</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Added</th>
+                                    <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 bg-white">
+                                @foreach ($hrStaff as $staff)
+                                    <tr class="hover:bg-gray-50/60">
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">{{ $staff->name }}</div>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                            <div class="text-gray-900">{{ $staff->email }}</div>
+                                            <div class="text-gray-400">{{ $staff->phone }}</div>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                            {{ $staff->created_at->format('d M Y') }}
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-right text-sm">
+                                            <div class="inline-flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    wire:click="resetHrPassword({{ $staff->id }})"
+                                                    wire:confirm="Reset password for {{ $staff->name }} and email a new temporary password?"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="resetHrPassword({{ $staff->id }})"
+                                                    class="text-stormy-600 hover:text-stormy-800 font-medium text-xs disabled:opacity-70"
+                                                >
+                                                    <span wire:loading.remove wire:target="resetHrPassword({{ $staff->id }})">Reset Password</span>
+                                                    <span wire:loading wire:target="resetHrPassword({{ $staff->id }})" style="display: none;">Sending...</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    wire:click="removeHrStaff({{ $staff->id }})"
+                                                    wire:confirm="Remove {{ $staff->name }} as HR staff? They will no longer be able to sign in."
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="removeHrStaff({{ $staff->id }})"
+                                                    class="text-red-600 hover:text-red-800 font-medium text-xs disabled:opacity-70"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </div>
+        </div>
     </div>
 </div>

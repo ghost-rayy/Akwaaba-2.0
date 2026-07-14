@@ -551,7 +551,7 @@
                         <h4 class="font-bold text-gray-900 text-lg">Endorsed Letter Ready</h4>
                         <p class="text-gray-500 text-sm mt-0.5">Your official endorsement letter is signed and ready for downloading.</p>
                     </div>
-                    <a href="{{ Storage::url($endorsedLetter->generated_file_path) }}" target="_blank"
+                    <a href="{{ Storage::url($endorsedLetter->generated_file_path) }}?v={{ $endorsedLetter->updated_at->timestamp }}" target="_blank"
                        class="inline-flex items-center gap-2 bg-gradient-to-r from-stormy-600 to-stormy-700 hover:from-stormy-700 hover:to-stormy-800 text-white font-semibold py-2.5 px-5 rounded-xl shadow-md transition-all self-start sm:self-auto text-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         Download Endorsed Letter

@@ -75,7 +75,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100">
             <h3 class="font-semibold text-gray-900">All Attendance History</h3>
-            <p class="text-xs text-gray-500 mt-1">Latest 50 records across all dates. Use column headers above to sort.</p>
+            <p class="text-xs text-gray-500 mt-1">All attendance records. Use column headers above to sort.</p>
         </div>
 
         @if ($history->isEmpty())
@@ -130,6 +130,9 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-100">
+                {{ $history->links(data: ['pageName' => 'historyPage']) }}
             </div>
         @endif
     </div>

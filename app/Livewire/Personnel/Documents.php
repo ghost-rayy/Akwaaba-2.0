@@ -40,7 +40,7 @@ class Documents extends Component
 
         $endorsedLetters = EndorsedLetter::whereHas('enrollment', function ($q) use ($user) {
             $q->where('user_id', $user->id);
-        })->with(['letterTemplate', 'enrollment.department'])->latest()->get();
+        })->with(['letterTemplate', 'enrollment.department'])->latest('updated_at')->get();
 
         return view('livewire.personnel.documents', [
             'endorsedLetters' => $endorsedLetters,
