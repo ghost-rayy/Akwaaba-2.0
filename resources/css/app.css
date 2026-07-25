@@ -3,17 +3,408 @@
 @tailwind utilities;
 
 @layer base {
-    :root {
-        --color-stormy-50: #f0f5fa;
-        --color-stormy-100: #d9e7f3;
-        --color-stormy-200: #bdddfc;
-        --color-stormy-300: #9fcdf0;
-        --color-stormy-400: #88bdf2;
-        --color-stormy-500: #6a89a7;
-        --color-stormy-600: #55708a;
-        --color-stormy-700: #384959;
-        --color-stormy-800: #2a3643;
-        --color-stormy-900: #1c242d;
+    :root,
+    [data-theme="stormy"] {
+        --color-stormy-50: 240 245 250;
+        --color-stormy-100: 217 231 243;
+        --color-stormy-200: 189 221 252;
+        --color-stormy-300: 159 205 240;
+        --color-stormy-400: 136 189 242;
+        --color-stormy-500: 106 137 167;
+        --color-stormy-600: 85 112 138;
+        --color-stormy-700: 56 73 89;
+        --color-stormy-800: 42 54 67;
+        --color-stormy-900: 28 36 45;
+    }
+
+    [data-theme="emerald"] {
+        --color-stormy-50: 236 253 245;
+        --color-stormy-100: 209 250 229;
+        --color-stormy-200: 167 243 208;
+        --color-stormy-300: 110 231 183;
+        --color-stormy-400: 52 211 153;
+        --color-stormy-500: 16 185 129;
+        --color-stormy-600: 5 150 105;
+        --color-stormy-700: 4 120 87;
+        --color-stormy-800: 6 95 70;
+        --color-stormy-900: 6 78 59;
+    }
+
+    [data-theme="indigo"] {
+        --color-stormy-50: 238 242 255;
+        --color-stormy-100: 224 231 255;
+        --color-stormy-200: 199 210 254;
+        --color-stormy-300: 165 180 252;
+        --color-stormy-400: 129 140 248;
+        --color-stormy-500: 99 102 241;
+        --color-stormy-600: 79 70 229;
+        --color-stormy-700: 67 56 202;
+        --color-stormy-800: 55 48 163;
+        --color-stormy-900: 49 46 129;
+    }
+
+    [data-theme="violet"] {
+        --color-stormy-50: 245 243 255;
+        --color-stormy-100: 237 233 254;
+        --color-stormy-200: 221 214 254;
+        --color-stormy-300: 196 181 253;
+        --color-stormy-400: 167 139 250;
+        --color-stormy-500: 139 92 246;
+        --color-stormy-600: 124 58 237;
+        --color-stormy-700: 109 40 217;
+        --color-stormy-800: 91 33 182;
+        --color-stormy-900: 76 29 149;
+    }
+
+    [data-theme="rose"] {
+        --color-stormy-50: 255 241 242;
+        --color-stormy-100: 255 228 230;
+        --color-stormy-200: 254 205 211;
+        --color-stormy-300: 253 164 175;
+        --color-stormy-400: 251 113 133;
+        --color-stormy-500: 244 63 94;
+        --color-stormy-600: 225 29 72;
+        --color-stormy-700: 190 18 60;
+        --color-stormy-800: 159 18 57;
+        --color-stormy-900: 136 19 55;
+    }
+
+    [data-theme="teal"] {
+        --color-stormy-50: 240 253 250;
+        --color-stormy-100: 204 251 241;
+        --color-stormy-200: 153 246 228;
+        --color-stormy-300: 94 234 212;
+        --color-stormy-400: 45 212 191;
+        --color-stormy-500: 20 184 166;
+        --color-stormy-600: 13 148 136;
+        --color-stormy-700: 15 118 110;
+        --color-stormy-800: 17 94 89;
+        --color-stormy-900: 19 78 74;
+    }
+
+    [data-theme="navy"] {
+        --color-stormy-50: 238 242 249;
+        --color-stormy-100: 216 225 241;
+        --color-stormy-200: 179 196 227;
+        --color-stormy-300: 133 160 208;
+        --color-stormy-400: 91 120 184;
+        --color-stormy-500: 59 89 152;
+        --color-stormy-600: 44 68 120;
+        --color-stormy-700: 31 50 90;
+        --color-stormy-800: 22 36 63;
+        --color-stormy-900: 13 23 40;
+    }
+
+    [data-theme="sky"] {
+        --color-stormy-50: 240 249 255;
+        --color-stormy-100: 224 242 254;
+        --color-stormy-200: 186 230 253;
+        --color-stormy-300: 125 211 252;
+        --color-stormy-400: 56 189 248;
+        --color-stormy-500: 14 165 233;
+        --color-stormy-600: 2 132 199;
+        --color-stormy-700: 3 105 161;
+        --color-stormy-800: 7 89 133;
+        --color-stormy-900: 12 74 110;
+    }
+
+    [data-theme="cyan"] {
+        --color-stormy-50: 236 254 255;
+        --color-stormy-100: 207 250 254;
+        --color-stormy-200: 165 243 252;
+        --color-stormy-300: 103 232 249;
+        --color-stormy-400: 34 211 238;
+        --color-stormy-500: 6 182 212;
+        --color-stormy-600: 8 145 178;
+        --color-stormy-700: 14 116 144;
+        --color-stormy-800: 21 94 117;
+        --color-stormy-900: 22 78 99;
+    }
+
+    [data-theme="forest"] {
+        --color-stormy-50: 240 253 244;
+        --color-stormy-100: 220 252 231;
+        --color-stormy-200: 187 247 208;
+        --color-stormy-300: 134 239 172;
+        --color-stormy-400: 74 222 128;
+        --color-stormy-500: 34 197 94;
+        --color-stormy-600: 22 163 74;
+        --color-stormy-700: 21 128 61;
+        --color-stormy-800: 22 101 52;
+        --color-stormy-900: 20 83 45;
+    }
+
+    [data-theme="amber"] {
+        --color-stormy-50: 255 251 235;
+        --color-stormy-100: 254 243 199;
+        --color-stormy-200: 253 230 138;
+        --color-stormy-300: 252 211 77;
+        --color-stormy-400: 251 191 36;
+        --color-stormy-500: 245 158 11;
+        --color-stormy-600: 217 119 6;
+        --color-stormy-700: 180 83 9;
+        --color-stormy-800: 146 64 14;
+        --color-stormy-900: 120 53 15;
+    }
+
+    [data-theme="orange"] {
+        --color-stormy-50: 255 247 237;
+        --color-stormy-100: 255 237 213;
+        --color-stormy-200: 254 215 170;
+        --color-stormy-300: 253 186 116;
+        --color-stormy-400: 251 146 60;
+        --color-stormy-500: 249 115 22;
+        --color-stormy-600: 234 88 12;
+        --color-stormy-700: 194 65 12;
+        --color-stormy-800: 154 52 18;
+        --color-stormy-900: 124 45 18;
+    }
+
+    [data-theme="crimson"] {
+        --color-stormy-50: 254 242 242;
+        --color-stormy-100: 254 226 226;
+        --color-stormy-200: 254 202 202;
+        --color-stormy-300: 252 165 165;
+        --color-stormy-400: 248 113 113;
+        --color-stormy-500: 239 68 68;
+        --color-stormy-600: 220 38 38;
+        --color-stormy-700: 185 28 28;
+        --color-stormy-800: 153 27 27;
+        --color-stormy-900: 127 29 29;
+    }
+
+    [data-theme="fuchsia"] {
+        --color-stormy-50: 253 244 255;
+        --color-stormy-100: 250 232 255;
+        --color-stormy-200: 245 208 254;
+        --color-stormy-300: 240 171 252;
+        --color-stormy-400: 232 121 249;
+        --color-stormy-500: 217 70 239;
+        --color-stormy-600: 192 38 211;
+        --color-stormy-700: 162 28 175;
+        --color-stormy-800: 134 25 143;
+        --color-stormy-900: 112 26 117;
+    }
+
+    [data-theme="slate"] {
+        --color-stormy-50: 248 250 252;
+        --color-stormy-100: 241 245 249;
+        --color-stormy-200: 226 232 240;
+        --color-stormy-300: 203 213 225;
+        --color-stormy-400: 148 163 184;
+        --color-stormy-500: 100 116 139;
+        --color-stormy-600: 71 85 105;
+        --color-stormy-700: 51 65 85;
+        --color-stormy-800: 30 41 59;
+        --color-stormy-900: 15 23 42;
+    }
+
+    [data-theme="bronze"] {
+        --color-stormy-50: 250 246 242;
+        --color-stormy-100: 242 232 221;
+        --color-stormy-200: 227 205 182;
+        --color-stormy-300: 207 174 141;
+        --color-stormy-400: 185 142 100;
+        --color-stormy-500: 162 118 74;
+        --color-stormy-600: 133 94 58;
+        --color-stormy-700: 104 73 46;
+        --color-stormy-800: 77 54 35;
+        --color-stormy-900: 54 38 25;
+    }
+
+    [data-theme="lime"] {
+        --color-stormy-50: 247 254 231;
+        --color-stormy-100: 236 252 203;
+        --color-stormy-200: 217 249 157;
+        --color-stormy-300: 190 242 100;
+        --color-stormy-400: 163 230 53;
+        --color-stormy-500: 132 204 22;
+        --color-stormy-600: 101 163 13;
+        --color-stormy-700: 77 124 15;
+        --color-stormy-800: 63 98 18;
+        --color-stormy-900: 54 83 20;
+    }
+
+    [data-theme="mint"] {
+        --color-stormy-50: 236 253 245;
+        --color-stormy-100: 209 250 229;
+        --color-stormy-200: 167 243 208;
+        --color-stormy-300: 110 231 183;
+        --color-stormy-400: 52 211 153;
+        --color-stormy-500: 16 185 129;
+        --color-stormy-600: 5 150 105;
+        --color-stormy-700: 4 120 87;
+        --color-stormy-800: 6 95 70;
+        --color-stormy-900: 2 44 34;
+    }
+
+    [data-theme="sapphire"] {
+        --color-stormy-50: 239 246 255;
+        --color-stormy-100: 219 234 254;
+        --color-stormy-200: 191 219 254;
+        --color-stormy-300: 147 197 253;
+        --color-stormy-400: 96 165 250;
+        --color-stormy-500: 59 130 246;
+        --color-stormy-600: 37 99 235;
+        --color-stormy-700: 29 78 216;
+        --color-stormy-800: 30 64 175;
+        --color-stormy-900: 30 58 138;
+    }
+
+    [data-theme="cobalt"] {
+        --color-stormy-50: 236 242 255;
+        --color-stormy-100: 210 224 255;
+        --color-stormy-200: 168 192 255;
+        --color-stormy-300: 120 155 245;
+        --color-stormy-400: 74 114 230;
+        --color-stormy-500: 37 82 210;
+        --color-stormy-600: 20 64 180;
+        --color-stormy-700: 15 50 145;
+        --color-stormy-800: 12 38 110;
+        --color-stormy-900: 10 28 80;
+    }
+
+    [data-theme="plum"] {
+        --color-stormy-50: 250 245 255;
+        --color-stormy-100: 243 232 255;
+        --color-stormy-200: 233 213 255;
+        --color-stormy-300: 216 180 254;
+        --color-stormy-400: 192 132 252;
+        --color-stormy-500: 168 85 247;
+        --color-stormy-600: 147 51 234;
+        --color-stormy-700: 126 34 206;
+        --color-stormy-800: 107 33 168;
+        --color-stormy-900: 88 28 135;
+    }
+
+    [data-theme="lavender"] {
+        --color-stormy-50: 245 243 255;
+        --color-stormy-100: 237 233 254;
+        --color-stormy-200: 221 214 254;
+        --color-stormy-300: 196 181 253;
+        --color-stormy-400: 167 139 250;
+        --color-stormy-500: 139 92 246;
+        --color-stormy-600: 124 58 237;
+        --color-stormy-700: 109 40 217;
+        --color-stormy-800: 91 33 182;
+        --color-stormy-900: 76 29 149;
+    }
+
+    [data-theme="coral"] {
+        --color-stormy-50: 255 241 242;
+        --color-stormy-100: 255 228 230;
+        --color-stormy-200: 254 205 211;
+        --color-stormy-300: 253 164 175;
+        --color-stormy-400: 251 113 133;
+        --color-stormy-500: 244 63 94;
+        --color-stormy-600: 225 29 72;
+        --color-stormy-700: 190 18 60;
+        --color-stormy-800: 159 18 57;
+        --color-stormy-900: 136 19 55;
+    }
+
+    [data-theme="peach"] {
+        --color-stormy-50: 255 247 237;
+        --color-stormy-100: 255 237 213;
+        --color-stormy-200: 254 215 170;
+        --color-stormy-300: 253 186 116;
+        --color-stormy-400: 251 146 60;
+        --color-stormy-500: 249 115 22;
+        --color-stormy-600: 234 88 12;
+        --color-stormy-700: 194 65 12;
+        --color-stormy-800: 154 52 18;
+        --color-stormy-900: 124 45 18;
+    }
+
+    [data-theme="wine"] {
+        --color-stormy-50: 255 241 242;
+        --color-stormy-100: 255 228 230;
+        --color-stormy-200: 254 205 211;
+        --color-stormy-300: 253 164 175;
+        --color-stormy-400: 251 113 133;
+        --color-stormy-500: 225 29 72;
+        --color-stormy-600: 190 18 60;
+        --color-stormy-700: 159 18 57;
+        --color-stormy-800: 136 19 55;
+        --color-stormy-900: 76 5 25;
+    }
+
+    [data-theme="charcoal"] {
+        --color-stormy-50: 249 250 251;
+        --color-stormy-100: 243 244 246;
+        --color-stormy-200: 229 231 235;
+        --color-stormy-300: 209 213 219;
+        --color-stormy-400: 156 163 175;
+        --color-stormy-500: 107 114 128;
+        --color-stormy-600: 75 85 99;
+        --color-stormy-700: 55 65 81;
+        --color-stormy-800: 31 41 55;
+        --color-stormy-900: 17 24 39;
+    }
+
+    [data-theme="olive"] {
+        --color-stormy-50: 247 254 231;
+        --color-stormy-100: 236 252 203;
+        --color-stormy-200: 217 249 157;
+        --color-stormy-300: 190 242 100;
+        --color-stormy-400: 163 230 53;
+        --color-stormy-500: 132 204 22;
+        --color-stormy-600: 101 163 13;
+        --color-stormy-700: 77 124 15;
+        --color-stormy-800: 63 98 18;
+        --color-stormy-900: 36 52 12;
+    }
+
+    [data-theme="sand"] {
+        --color-stormy-50: 250 250 249;
+        --color-stormy-100: 245 245 244;
+        --color-stormy-200: 231 229 228;
+        --color-stormy-300: 214 211 209;
+        --color-stormy-400: 168 162 158;
+        --color-stormy-500: 120 113 108;
+        --color-stormy-600: 87 83 78;
+        --color-stormy-700: 68 64 60;
+        --color-stormy-800: 41 37 36;
+        --color-stormy-900: 28 25 23;
+    }
+
+    [data-theme="aqua"] {
+        --color-stormy-50: 236 254 255;
+        --color-stormy-100: 207 250 254;
+        --color-stormy-200: 165 243 252;
+        --color-stormy-300: 103 232 249;
+        --color-stormy-400: 34 211 238;
+        --color-stormy-500: 6 182 212;
+        --color-stormy-600: 8 145 178;
+        --color-stormy-700: 14 116 144;
+        --color-stormy-800: 21 94 117;
+        --color-stormy-900: 8 51 68;
+    }
+
+    [data-theme="magenta"] {
+        --color-stormy-50: 253 242 248;
+        --color-stormy-100: 252 231 243;
+        --color-stormy-200: 251 207 232;
+        --color-stormy-300: 249 168 212;
+        --color-stormy-400: 244 114 182;
+        --color-stormy-500: 236 72 153;
+        --color-stormy-600: 219 39 119;
+        --color-stormy-700: 190 24 93;
+        --color-stormy-800: 157 23 77;
+        --color-stormy-900: 131 24 67;
+    }
+
+    [data-theme="midnight"] {
+        --color-stormy-50: 239 246 255;
+        --color-stormy-100: 219 234 254;
+        --color-stormy-200: 191 219 254;
+        --color-stormy-300: 147 197 253;
+        --color-stormy-400: 96 165 250;
+        --color-stormy-500: 59 130 246;
+        --color-stormy-600: 37 99 235;
+        --color-stormy-700: 30 58 138;
+        --color-stormy-800: 30 41 90;
+        --color-stormy-900: 15 23 42;
     }
 }
 
@@ -106,4 +497,3 @@
     animation: indeterminate-progress-short 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
     animation-delay: 1.15s;
 }
-

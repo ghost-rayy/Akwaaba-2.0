@@ -9,8 +9,13 @@ class Company extends Model
     protected $fillable = [
         'name', 'logo_path', 'email', 'phone', 'location', 'postal_address', 'posting_date',
         'digital_signature_path', 'stamp_path', 'posting_letter_path', 'registration_number',
-        'contact_person', 'is_active',
+        'contact_person', 'is_active', 'theme',
     ];
+
+    public function themeKey(): string
+    {
+        return \App\Support\CompanyThemes::normalize($this->theme);
+    }
 
     public function logoUrl(): ?string
     {

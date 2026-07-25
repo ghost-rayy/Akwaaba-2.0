@@ -17,22 +17,96 @@
             <div>
                 @if ($letterType === 'appointment_letter')
                     <h2 class="text-xl font-semibold">Appointment Letter</h2>
-                    <p class="text-sm text-gray-500">Upload a company appointment template, map fields, then generate for validated personnel.</p>
+                    <p class="text-sm text-gray-500">Draft the letter on the platform, insert variables, then generate for validated personnel.</p>
                 @else
                     <h2 class="text-xl font-semibold">Posting Letter Field Mapping</h2>
                     <p class="text-sm text-gray-500">Configure field positions on the company posting letter template.</p>
                 @endif
             </div>
-            @if ($letterType === 'appointment_letter' && $template && $template->field_mappings_count > 0)
-                <button type="button" wire:click="startGenerate"
-                        class="inline-flex items-center gap-2 bg-stormy-600 text-white px-4 py-2 rounded-md hover:bg-stormy-700 text-sm font-medium">
-                    Generate Letters
-                </button>
+            @if ($letterType === 'appointment_letter')
+                <div class="flex items-center gap-2">
+                    <button type="button" wire:click="startDraft"
+                            class="inline-flex items-center gap-2 border border-stormy-600 text-stormy-700 px-4 py-2 rounded-md hover:bg-stormy-50 text-sm font-medium">
+                        {{ $template && filled($template->body) ? 'Edit Draft' : 'Draft Letter' }}
+                    </button>
+                    @if ($template && filled($template->body))
+                        <button type="button" wire:click="startGenerate"
+                                class="inline-flex items-center gap-2 bg-stormy-600 text-white px-4 py-2 rounded-md hover:bg-stormy-700 text-sm font-medium">
+                            Generate Letters
+                        </button>
+                    @endif
+                </div>
             @endif
         </div>
 
-        @if ($template)
-            <div class="bg-white rounded-lg shadow p-6 border border-gray-200 mb-6">
+        @if ($letterType === 'appointment_letter')
+            @if ($template && filled($template->body))
+                <div class="bg-white rounded-lg shadow p-6 border border-gray-200 mb-6">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h3 class="font-semibold">{{ $template->name }}</h3>
+                            <p class="text-sm text-gray-500">Draft saved · variables are filled when you generate for each person</p>
+                        </div>
+                        <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Active</span>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-100 rounded-lg p-4 text-sm text-gray-700 max-h-48 overflow-y-auto mb-4">{{ \Illuminate\Support\Str::limit(trim(strip_tags($template->body)), 600) }}</div>
+                    <div class="flex gap-2">
+                        <button type="button" wire:click="startDraft" class="text-stormy-600 text-sm hover:text-stormy-800 font-medium">Edit Draft</button>
+                        <button type="button" wire:click="deleteTemplate({{ $template->id }})"
+                                wire:confirm="Delete this appointment draft?"
+                                class="text-red-600 text-sm hover:text-red-800 ml-auto">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            @else
+                <div class="bg-white rounded-lg shadow p-12 text-center mb-6">
+                    <p class="text-gray-500 mb-2">No appointment letter draft yet.</p>
+                    <p class="text-sm text-gray-400 mb-4">Write the letter once, insert variables like full name and start date, then issue it to validated personnel.</p>
+                    <button type="button" wire:click="startDraft"
+                            class="inline-flex items-center gap-2 bg-stormy-600 text-white px-4 py-2 rounded-md hover:bg-stormy-700 text-sm font-medium">
+                        Draft Letter
+                    </button>
+                </div>
+            @endif
+
+            @if ($issuedLetters->isNotEmpty())
+                <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-900">Issued Appointment Letters</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
+                                <tr>
+                                    <th class="px-6 py-3">Personnel</th>
+                                    <th class="px-6 py-3">Department</th>
+                                    <th class="px-6 py-3">Issued</th>
+                                    <th class="px-6 py-3">By</th>
+                                    <th class="px-6 py-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach ($issuedLetters as $letter)
+                                    <tr>
+                                        <td class="px-6 py-3 font-medium text-gray-900">{{ $letter->enrollment?->user?->name }}</td>
+                                        <td class="px-6 py-3 text-gray-600">{{ $letter->enrollment?->department?->name ?? '—' }}</td>
+                                        <td class="px-6 py-3 text-gray-600">{{ $letter->updated_at->format('d M Y, h:i A') }}</td>
+                                        <td class="px-6 py-3 text-gray-600">{{ $letter->issuedBy?->name ?? '—' }}</td>
+                                        <td class="px-6 py-3 text-right">
+                                            <a href="{{ Storage::url($letter->generated_file_path) }}?v={{ $letter->updated_at->timestamp }}" target="_blank"
+                                               class="text-stormy-600 hover:text-stormy-800 font-medium">View</a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
+        @elseif ($template)
+            <div class="bg-white rounded-lg shadow p-6 border border-gray-200">
                 <div class="flex items-start justify-between mb-3">
                     <div>
                         <h3 class="font-semibold">{{ $template->name }}</h3>
@@ -42,86 +116,142 @@
                     </div>
                     <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Active</span>
                 </div>
-                <div class="flex gap-2 flex-wrap">
+                <div class="flex gap-2">
                     <button wire:click="startMapping({{ $template->id }})"
                             class="text-stormy-600 text-sm hover:text-stormy-800 font-medium">
                         {{ $template->field_mappings_count > 0 ? 'Edit Fields' : 'Configure Fields' }}
                     </button>
-                    @if ($letterType === 'appointment_letter')
-                        <div class="flex items-center gap-2">
-                            <input type="file" wire:model="appointmentUpload" accept=".pdf"
-                                   class="block text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-stormy-50 file:text-stormy-700">
-                            <button type="button" wire:click="uploadAppointmentTemplate"
-                                    class="text-stormy-600 text-sm hover:text-stormy-800 font-medium whitespace-nowrap">
-                                Replace PDF
-                            </button>
-                        </div>
-                    @endif
                     <button wire:click="deleteTemplate({{ $template->id }})"
                             wire:confirm="Delete this template? Field mappings will be lost."
                             class="text-red-600 text-sm hover:text-red-800 ml-auto">
                         Delete
                     </button>
                 </div>
-                <div wire:loading wire:target="appointmentUpload,uploadAppointmentTemplate" class="text-xs text-gray-400 mt-2">Uploading...</div>
-                @error('appointmentUpload') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
         @else
-            <div class="bg-white rounded-lg shadow p-12 text-center mb-6">
-                @if ($letterType === 'appointment_letter')
-                    <p class="text-gray-500 mb-4">No appointment letter template uploaded yet.</p>
-                    <div class="max-w-md mx-auto space-y-3">
-                        <input type="file" wire:model="appointmentUpload" accept=".pdf"
-                               class="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-stormy-50 file:text-stormy-700 hover:file:bg-stormy-100">
-                        <x-loading-button type="button" target="uploadAppointmentTemplate" loading="Uploading..."
-                                wire:click="uploadAppointmentTemplate"
-                                class="inline-flex items-center justify-center gap-2 bg-stormy-600 text-white px-4 py-2 rounded-md hover:bg-stormy-700 text-sm font-medium disabled:opacity-70">
-                            Upload Appointment PDF
-                        </x-loading-button>
-                        <div wire:loading wire:target="appointmentUpload" class="text-xs text-gray-400">Preparing file...</div>
-                        @error('appointmentUpload') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
-                    </div>
-                @else
-                    <p class="text-gray-500 mb-2">No posting letter template uploaded yet.</p>
-                    <p class="text-sm text-gray-400">Go to <a href="{{ route('company.settings') }}" class="text-stormy-600 underline">Settings</a> to upload the company posting letter PDF.</p>
-                @endif
+            <div class="bg-white rounded-lg shadow p-12 text-center">
+                <p class="text-gray-500 mb-2">No posting letter template uploaded yet.</p>
+                <p class="text-sm text-gray-400">Go to <a href="{{ route('company.settings') }}" class="text-stormy-600 underline">Settings</a> to upload the company posting letter PDF.</p>
             </div>
         @endif
 
-        @if ($letterType === 'appointment_letter' && $issuedLetters->isNotEmpty())
-            <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100">
-                    <h3 class="font-semibold text-gray-900">Issued Appointment Letters</h3>
+    {{-- DRAFT MODE --}}
+    @elseif ($mode === 'draft' && $letterType === 'appointment_letter')
+        @assets
+        <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+        <style>
+            .word-editor .ql-toolbar {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                background: #fff;
+                border: 1px solid #e5e7eb;
+                border-radius: 0.75rem 0.75rem 0 0;
+            }
+            .word-editor .ql-container {
+                border: none;
+                background: transparent;
+                font-size: 12pt;
+                font-family: Georgia, 'Times New Roman', serif;
+            }
+            .word-editor .ql-editor {
+                position: relative;
+                width: 816px;
+                max-width: calc(100% - 32px);
+                min-height: 1056px;
+                margin: 24px auto;
+                padding: 96px 90px;
+                background: #fff;
+                border-radius: 2px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.12);
+                line-height: 1.7;
+                overflow-wrap: break-word;
+            }
+            .word-editor .ql-editor.ql-blank::before {
+                left: 90px;
+                right: 90px;
+                top: 96px;
+                font-style: normal;
+                color: #9ca3af;
+            }
+        </style>
+        @endassets
+
+        <div class="flex items-center mb-6 gap-4">
+            <button wire:click="$set('mode', 'list')" class="text-stormy-600 hover:text-stormy-800 text-sm">&larr; Back</button>
+            <div>
+                <h2 class="text-xl font-semibold">Draft Appointment Letter</h2>
+                <p class="text-sm text-gray-500">Format the letter like a document. Click a variable to insert it at the cursor — values fill in when you generate.</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-6"
+             x-data="{
+                quill: null,
+                init() {
+                    this.quill = new Quill(this.$refs.editor, {
+                        theme: 'snow',
+                        placeholder: 'Dear {'+'{full_name}'+'}, ...',
+                        modules: {
+                            toolbar: [
+                                [{ font: [] }, { size: ['small', false, 'large', 'huge'] }],
+                                [{ header: [1, 2, 3, false] }],
+                                ['bold', 'italic', 'underline', 'strike'],
+                                [{ color: [] }, { background: [] }],
+                                [{ align: [] }],
+                                [{ list: 'ordered' }, { list: 'bullet' }],
+                                [{ indent: '-1' }, { indent: '+1' }],
+                                ['clean'],
+                            ],
+                        },
+                    });
+                    this.quill.root.innerHTML = $wire.draftBody || '';
+                    this.quill.on('text-change', () => {
+                        $wire.set('draftBody', this.quill.root.innerHTML, false);
+                    });
+                },
+                insertVariable(key) {
+                    const token = '{' + '{' + key + '}' + '}';
+                    const range = this.quill.getSelection(true);
+                    this.quill.insertText(range.index, token, 'user');
+                    this.quill.setSelection(range.index + token.length);
+                    $wire.set('draftBody', this.quill.root.innerHTML, false);
+                }
+             }">
+            <div class="xl:col-span-3">
+                <div class="word-editor bg-gray-200/80 rounded-xl border border-gray-200 overflow-hidden" wire:ignore>
+                    <div x-ref="editor"></div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
-                            <tr>
-                                <th class="px-6 py-3">Personnel</th>
-                                <th class="px-6 py-3">Department</th>
-                                <th class="px-6 py-3">Issued</th>
-                                <th class="px-6 py-3">By</th>
-                                <th class="px-6 py-3"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            @foreach ($issuedLetters as $letter)
-                                <tr>
-                                    <td class="px-6 py-3 font-medium text-gray-900">{{ $letter->enrollment?->user?->name }}</td>
-                                    <td class="px-6 py-3 text-gray-600">{{ $letter->enrollment?->department?->name ?? '—' }}</td>
-                                    <td class="px-6 py-3 text-gray-600">{{ $letter->updated_at->format('d M Y, h:i A') }}</td>
-                                    <td class="px-6 py-3 text-gray-600">{{ $letter->issuedBy?->name ?? '—' }}</td>
-                                    <td class="px-6 py-3 text-right">
-                                        <a href="{{ Storage::url($letter->generated_file_path) }}?v={{ $letter->updated_at->timestamp }}" target="_blank"
-                                           class="text-stormy-600 hover:text-stormy-800 font-medium">View</a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                @error('draftBody') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+
+                <div class="mt-4 flex justify-end">
+                    <x-loading-button type="button" target="saveDraft" loading="Saving..."
+                            wire:click="saveDraft"
+                            class="inline-flex items-center gap-2 bg-stormy-600 text-white px-4 py-2 rounded-md hover:bg-stormy-700 text-sm font-medium disabled:opacity-70">
+                        Save Draft
+                    </x-loading-button>
                 </div>
             </div>
-        @endif
+
+            <div class="bg-white rounded-lg shadow border border-gray-200 p-4 h-fit xl:sticky xl:top-6">
+                <h3 class="font-semibold mb-1">Insert variables</h3>
+                <p class="text-xs text-gray-500 mb-3">Click to add at the cursor position.</p>
+                <div class="flex flex-wrap gap-2">
+                    @foreach ($appointmentFields as $key => $label)
+                        <button type="button"
+                                @click="insertVariable(@js($key))"
+                                class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-stormy-50 text-stormy-700 border border-stormy-100 hover:bg-stormy-100">
+                            {{ $label }}
+                        </button>
+                    @endforeach
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500 space-y-2">
+                    <p>Example: <code class="bg-gray-50 px-1 rounded">@{{full_name}}</code> becomes the personnel’s name.</p>
+                    <p><code class="bg-gray-50 px-1 rounded">@{{signature}}</code> and <code class="bg-gray-50 px-1 rounded">@{{stamp}}</code> use company assets from Settings.</p>
+                </div>
+            </div>
+        </div>
 
     {{-- GENERATE MODE --}}
     @elseif ($mode === 'generate' && $letterType === 'appointment_letter')
@@ -198,8 +328,8 @@
             </div>
         @endif
 
-    {{-- MAPPING MODE --}}
-    @elseif ($mode === 'mapping' && $currentTemplate)
+    {{-- MAPPING MODE (posting only) --}}
+    @elseif ($mode === 'mapping' && $letterType === 'posting_letter' && $currentTemplate)
         <div x-data="templateBuilder" wire:ignore data-pdf-url="{{ $templateBase64 }}"
              data-fields='{{ json_encode($currentTemplate->fieldMappings->map(fn($fm) => ["id" => $fm->id, "x" => (float)$fm->x, "y" => (float)$fm->y, "w" => (float)($fm->width??150), "h" => (float)($fm->height??30), "field_key" => $fm->field_key, "label" => $fm->label, "font_size" => $fm->font_size??12, "text_alignment" => $fm->text_alignment??"left", "page_number" => (int)($fm->page_number??1)])) }}'>
             <div class="flex items-center mb-4">
@@ -215,7 +345,6 @@
                                 style="display:none;"></canvas>
                     </div>
 
-                    {{-- Page Controls --}}
                     <div x-show="numPages > 1" class="flex items-center justify-between mt-4 px-2 pt-3 border-t border-gray-100">
                         <button type="button" @click="prevPage()" :disabled="currentPage === 1"
                                 class="px-3.5 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold shadow-sm transition-colors">

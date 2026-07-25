@@ -55,6 +55,79 @@
             </form>
         </div>
 
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">Portal Theme</h2>
+            <p class="text-sm text-gray-500 mb-6">Choose a brand color for your company portal. HR staff and personnel under this company inherit the same theme.</p>
+
+            <form wire:submit="updateTheme" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Theme</label>
+                    <div
+                        x-data="{ open: false }"
+                        @keydown.escape.window="open = false"
+                        class="relative max-w-md"
+                    >
+                        <button
+                            type="button"
+                            @click="open = !open"
+                            class="flex w-full items-center gap-3 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-left shadow-sm hover:border-gray-400 focus:border-stormy-500 focus:outline-none focus:ring-2 focus:ring-stormy-500"
+                        >
+                            <span class="h-6 w-6 shrink-0 rounded-full border border-black/10 shadow-sm"
+                                  style="background-color: {{ $themeOptions[$theme]['swatch'] ?? '#55708a' }}"></span>
+                            <span class="flex-1 text-sm font-medium text-gray-900">
+                                {{ $themeOptions[$theme]['label'] ?? 'Select theme' }}
+                            </span>
+                            <svg class="h-4 w-4 text-gray-400 transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div
+                            x-show="open"
+                            x-cloak
+                            @click.outside="open = false"
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="opacity-0 scale-95"
+                            x-transition:enter-end="opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="opacity-100 scale-100"
+                            x-transition:leave-end="opacity-0 scale-95"
+                            class="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                        >
+                            @foreach ($themeOptions as $key => $option)
+                                <button
+                                    type="button"
+                                    wire:click="$set('theme', '{{ $key }}')"
+                                    @click="open = false"
+                                    class="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-stormy-50 {{ $theme === $key ? 'bg-stormy-50' : '' }}"
+                                >
+                                    <span class="h-5 w-5 shrink-0 rounded-full border border-black/10 shadow-sm"
+                                          style="background-color: {{ $option['swatch'] }}"></span>
+                                    <span class="flex-1 font-medium text-gray-900">{{ $option['label'] }}</span>
+                                    @if ($theme === $key)
+                                        <svg class="h-4 w-4 text-stormy-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                    @endif
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                @if (isset($themeOptions[$theme]))
+                    <p class="text-xs text-gray-500">{{ $themeOptions[$theme]['description'] }}</p>
+                @endif
+                @error('theme') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+
+                <div class="flex justify-end">
+                    <x-loading-button target="updateTheme" loading="Saving..."
+                            class="px-6 py-2.5 bg-stormy-600 text-white rounded-lg hover:bg-stormy-700 text-sm font-medium transition-colors">
+                        Save Theme
+                    </x-loading-button>
+                </div>
+            </form>
+        </div>
+
         @php $company = auth()->user()->company; @endphp
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

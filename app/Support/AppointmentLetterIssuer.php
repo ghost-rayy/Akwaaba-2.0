@@ -7,8 +7,8 @@ use App\Models\Company;
 use App\Models\Enrollment;
 use App\Models\LetterTemplate;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
-use setasign\Fpdi\Fpdi;
 
 class AppointmentLetterIssuer
 {
@@ -17,19 +17,10 @@ class AppointmentLetterIssuer
         $template = LetterTemplate::where('company_id', $company->id)
             ->where('type', 'appointment_letter')
             ->where('is_active', true)
-            ->with('fieldMappings')
             ->first();
 
-        if (! $template) {
-            throw new \RuntimeException('No active appointment letter template. Upload and configure field mappings in the Letters tab first.');
-        }
-
-        if ($template->fieldMappings->isEmpty()) {
-            throw new \RuntimeException('Appointment letter template has no field mappings. Configure fields in the Letters tab first.');
-        }
-
-        if (! $template->template_file_path) {
-            throw new \RuntimeException('Appointment letter template PDF is missing. Re-upload the template in the Letters tab.');
+        if (! $template || ! filled($template->body)) {
+            throw new \RuntimeException('No appointment letter draft found. Draft and save the letter in the Letters tab first.');
         }
 
         return $template;
@@ -46,74 +37,61 @@ class AppointmentLetterIssuer
         return $data;
     }
 
+    public static function renderBody(string $body, Enrollment $enrollment, Company $company): string
+    {
+        $data = self::buildFieldData($enrollment, $company);
+
+        $signatureHtml = '';
+        if ($company->digital_signature_path && Storage::disk('public')->exists($company->digital_signature_path)) {
+            $signatureHtml = self::imageTag(Storage::disk('public')->path($company->digital_signature_path), 'Signature');
+        }
+
+        $stampHtml = '';
+        if ($company->stamp_path && Storage::disk('public')->exists($company->stamp_path)) {
+            $stampHtml = self::imageTag(Storage::disk('public')->path($company->stamp_path), 'Stamp');
+        }
+
+        $replacements = [];
+        foreach ($data as $key => $value) {
+            if ($key === 'signature' || $key === 'stamp') {
+                continue;
+            }
+            $replacements['{{'.$key.'}}'] = e((string) $value);
+        }
+        $replacements['{{signature}}'] = $signatureHtml;
+        $replacements['{{stamp}}'] = $stampHtml;
+
+        $rendered = strtr($body, $replacements);
+
+        // Preserve plain-text paragraphs when the draft has no HTML tags
+        if ($rendered === strip_tags($rendered)) {
+            $rendered = nl2br($rendered);
+        }
+
+        return $rendered;
+    }
+
     public static function generatePdf(
         Enrollment $enrollment,
         Company $company,
         LetterTemplate $template,
-        ?string $signaturePath,
-        ?string $stampPath,
     ): string {
-        $data = self::buildFieldData($enrollment, $company);
-        $template->loadMissing('fieldMappings');
+        $content = self::renderBody(
+            $template->body,
+            $enrollment->fresh(['user.personalInfo', 'user.educationInfo', 'department']),
+            $company,
+        );
 
-        $sourcePdfPath = storage_path('app/public/'.$template->template_file_path);
-
-        if (! file_exists($sourcePdfPath)) {
-            throw new \RuntimeException('Appointment letter template PDF file not found.');
-        }
-
-        $pdf = new Fpdi('P', 'pt');
-        $pageCount = $pdf->setSourceFile($sourcePdfPath);
-
-        for ($pageNum = 1; $pageNum <= $pageCount; $pageNum++) {
-            $templateId = $pdf->importPage($pageNum);
-            $size = $pdf->getTemplateSize($templateId);
-
-            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-            $pdf->useTemplate($templateId);
-
-            $pageFields = $template->fieldMappings->where('page_number', $pageNum);
-            foreach ($pageFields as $mapping) {
-                $x = $mapping->x / 1.5;
-                $y = $mapping->y / 1.5;
-                $w = $mapping->width / 1.5;
-                $h = $mapping->height / 1.5;
-
-                $fieldKey = $mapping->field_key;
-
-                if ($fieldKey === 'signature' && $signaturePath) {
-                    $sigFullPath = Storage::disk('public')->path($signaturePath);
-                    if (file_exists($sigFullPath)) {
-                        $pdf->Image($sigFullPath, $x, $y, $w, $h);
-                    }
-                } elseif ($fieldKey === 'stamp' && $stampPath) {
-                    $stampFullPath = Storage::disk('public')->path($stampPath);
-                    if (file_exists($stampFullPath)) {
-                        $pdf->Image($stampFullPath, $x, $y, $w, $h);
-                    }
-                } else {
-                    $text = $data[$fieldKey] ?? '';
-                    $pdf->SetFont('Arial', '', $mapping->font_size ?? 12);
-                    $pdf->SetXY($x, $y);
-
-                    $align = 'L';
-                    if ($mapping->text_alignment === 'center') {
-                        $align = 'C';
-                    }
-                    if ($mapping->text_alignment === 'right') {
-                        $align = 'R';
-                    }
-
-                    $pdf->Cell($w, $h, $text, 0, 0, $align);
-                }
-            }
-        }
+        $pdf = Pdf::loadView('pdf.appointment-letter', [
+            'content' => $content,
+            'company' => $company,
+        ])->setPaper('a4');
 
         $fileName = 'appointment_letter_'.$enrollment->nss_number.'_'.now()->format('YmdHis').'.pdf';
         $filePath = 'appointment_letters/'.$company->id.'/'.$fileName;
 
         Storage::disk('public')->makeDirectory('appointment_letters/'.$company->id);
-        $pdf->Output('F', Storage::disk('public')->path($filePath));
+        Storage::disk('public')->put($filePath, $pdf->output());
 
         return $filePath;
     }
@@ -134,8 +112,6 @@ class AppointmentLetterIssuer
             $enrollment->fresh(['user.personalInfo', 'user.educationInfo', 'department']),
             $company,
             $template,
-            $company->digital_signature_path,
-            $company->stamp_path,
         );
 
         $existing = AppointmentLetter::where('enrollment_id', $enrollment->id)->latest('id')->first();
@@ -162,5 +138,17 @@ class AppointmentLetterIssuer
         }
 
         return $letter;
+    }
+
+    protected static function imageTag(string $absolutePath, string $alt): string
+    {
+        if (! file_exists($absolutePath)) {
+            return '';
+        }
+
+        $mime = mime_content_type($absolutePath) ?: 'image/png';
+        $data = base64_encode(file_get_contents($absolutePath));
+
+        return '<img src="data:'.$mime.';base64,'.$data.'" alt="'.e($alt).'" style="max-height:80px;max-width:200px;" />';
     }
 }

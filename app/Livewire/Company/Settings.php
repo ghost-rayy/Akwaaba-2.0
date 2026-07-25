@@ -4,6 +4,7 @@ namespace App\Livewire\Company;
 
 use App\Mail\HrStaffOnboardedMail;
 use App\Models\User;
+use App\Support\CompanyThemes;
 use App\Support\DispatchesToast;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -31,6 +32,8 @@ class Settings extends Component
 
     public $posting_date;
 
+    public $theme;
+
     public $current_password;
 
     public $new_password;
@@ -54,6 +57,7 @@ class Settings extends Component
         $this->registration_number = $company->registration_number;
         $this->contact_person = $company->contact_person;
         $this->posting_date = $company->posting_date ?? now()->format('Y-m-d');
+        $this->theme = $company->themeKey();
     }
 
     public function updateProfile()
@@ -82,6 +86,21 @@ class Settings extends Component
         ]);
 
         $this->toastSuccess('Company profile updated.');
+    }
+
+    public function updateTheme()
+    {
+        $this->validate([
+            'theme' => 'required|in:'.implode(',', CompanyThemes::keys()),
+        ]);
+
+        auth()->user()->company->update([
+            'theme' => CompanyThemes::normalize($this->theme),
+        ]);
+
+        $this->js('document.documentElement.setAttribute("data-theme", '.json_encode(CompanyThemes::normalize($this->theme)).')');
+
+        $this->toastSuccess('Theme updated. It now applies to your company, HR, and personnel portals.');
     }
 
     public function changePassword()
@@ -191,6 +210,7 @@ class Settings extends Component
     {
         return view('livewire.company.settings', [
             'hrStaff' => $this->hrStaffQuery()->orderBy('name')->get(),
+            'themeOptions' => CompanyThemes::options(),
         ])->layout('layouts.company');
     }
 }

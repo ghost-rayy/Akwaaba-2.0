@@ -82,28 +82,4 @@ class DocumentUploadController extends Controller
             'message' => 'Posting letter template uploaded.',
         ]);
     }
-
-    public function appointmentLetter(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'file' => 'required|file|mimes:pdf|max:10240',
-        ]);
-
-        $company = auth('company')->user()->company;
-        $path = $validated['file']->store('appointmentletters/'.$company->id, 'public');
-
-        LetterTemplate::updateOrCreate(
-            ['company_id' => $company->id, 'type' => 'appointment_letter'],
-            [
-                'name' => $company->name.' Appointment Letter',
-                'template_file_path' => $path,
-                'is_active' => true,
-            ]
-        );
-
-        return response()->json([
-            'path' => $path,
-            'message' => 'Appointment letter template uploaded.',
-        ]);
-    }
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ auth()->user()?->company?->themeKey() ?? 'stormy' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -49,7 +49,7 @@
             'label' => 'Workspace',
             'items' => [
                 ['route' => 'company.letters', 'label' => 'Letters', 'badge' => false, 'icon' => 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'],
-                ['route' => 'company.departments', 'label' => 'Departments', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
+                ['route' => 'company.departments', 'label' => 'Departments', 'badge' => false, 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
                 ['route' => 'company.settings', 'label' => 'Settings', 'admin' => true, 'icon' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z'],
             ],
         ],
@@ -166,15 +166,7 @@
                     <p class="truncate text-xs capitalize text-stormy-500">{{ str_replace('_', ' ', $user->role) }}</p>
                 </div>
             </div>
-            <div class="grid grid-cols-2 gap-1.5">
-                <a
-                    href="{{ route('company.profile') }}"
-                    wire:navigate
-                    @click="sidebarOpen = false"
-                    class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                >
-                    Profile
-                </a>
+            <div>
                 <form method="POST" action="{{ route('company.logout') }}">
                     @csrf
                     <button
@@ -190,15 +182,6 @@
 
     {{-- Main --}}
     <div class="flex min-w-0 flex-1 flex-col lg:ml-72">
-        <button
-            type="button"
-            @click="sidebarOpen = true"
-            class="fixed bottom-5 left-5 z-30 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-stormy-700 text-white shadow-lg shadow-stormy-700/30 hover:bg-stormy-800 lg:hidden"
-            aria-label="Open menu"
-        >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
-
         <main class="flex-1 py-6">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {{ $slot }}

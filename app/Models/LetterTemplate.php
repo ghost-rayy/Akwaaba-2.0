@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class LetterTemplate extends Model
 {
     protected $fillable = [
-        'company_id', 'name', 'type', 'template_file_path',
+        'company_id', 'name', 'type', 'template_file_path', 'body',
         'pages_count', 'is_active',
     ];
 

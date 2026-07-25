@@ -9,17 +9,16 @@ use App\Models\TemplateFieldMapping;
 use App\Support\AppointmentLetterIssuer;
 use App\Support\DispatchesToast;
 use Livewire\Component;
-use Livewire\WithFileUploads;
 
 class Letters extends Component
 {
-    use DispatchesToast, WithFileUploads;
+    use DispatchesToast;
 
     public $letterType = 'posting_letter';
     public $mode = 'list';
     public $selectedTemplateId = null;
     public $editingField = null;
-    public $appointmentUpload;
+    public $draftBody = '';
     public $selectedEnrollmentIds = [];
 
     protected $queryString = [
@@ -75,19 +74,39 @@ class Letters extends Component
         $this->letterType = $type;
         $this->mode = 'list';
         $this->selectedTemplateId = null;
+        $this->draftBody = '';
         $this->selectedEnrollmentIds = [];
-        $this->reset('appointmentUpload');
     }
 
     public function startMapping($templateId)
     {
+        if ($this->letterType !== 'posting_letter') {
+            return;
+        }
+
         $template = LetterTemplate::where('company_id', auth()->user()->company_id)
-            ->where('type', $this->letterType)
+            ->where('type', 'posting_letter')
             ->findOrFail($templateId);
 
         $this->selectedTemplateId = $template->id;
         $this->editingField = null;
         $this->mode = 'mapping';
+    }
+
+    public function startDraft(): void
+    {
+        if ($this->letterType !== 'appointment_letter') {
+            return;
+        }
+
+        $company = auth()->user()->company;
+        $template = LetterTemplate::where('company_id', $company->id)
+            ->where('type', 'appointment_letter')
+            ->first();
+
+        $this->draftBody = $template?->body ?? '';
+        $this->selectedTemplateId = $template?->id;
+        $this->mode = 'draft';
     }
 
     public function startGenerate(): void
@@ -100,32 +119,42 @@ class Letters extends Component
         $this->mode = 'generate';
     }
 
-    public function uploadAppointmentTemplate()
+    public function saveDraft()
     {
-        $this->validate([
-            'appointmentUpload' => 'required|file|mimes:pdf|max:10240',
-        ]);
+        if ($this->letterType !== 'appointment_letter') {
+            return;
+        }
+
+        if (strlen(trim(strip_tags($this->draftBody))) < 10) {
+            $this->addError('draftBody', 'Write the appointment letter draft before saving.');
+
+            return;
+        }
 
         $company = auth()->user()->company;
-        $path = $this->appointmentUpload->store('appointmentletters/'.$company->id, 'public');
 
         LetterTemplate::updateOrCreate(
             ['company_id' => $company->id, 'type' => 'appointment_letter'],
             [
                 'name' => $company->name.' Appointment Letter',
-                'template_file_path' => $path,
+                'body' => $this->draftBody,
+                'template_file_path' => null,
                 'is_active' => true,
             ]
         );
 
-        $this->reset('appointmentUpload');
-        $this->toastSuccess('Appointment letter template uploaded.');
+        $this->toastSuccess('Appointment letter draft saved.');
+        $this->mode = 'list';
     }
 
     public function saveFieldMappings($fields)
     {
+        if ($this->letterType !== 'posting_letter') {
+            return;
+        }
+
         $template = LetterTemplate::where('company_id', auth()->user()->company_id)
-            ->where('type', $this->letterType)
+            ->where('type', 'posting_letter')
             ->findOrFail($this->selectedTemplateId);
 
         $fieldLabels = $this->availableFields;
@@ -181,8 +210,11 @@ class Letters extends Component
         $template->fieldMappings()->delete();
         $template->delete();
 
+        $this->draftBody = '';
+        $this->selectedTemplateId = null;
+
         $message = $this->letterType === 'appointment_letter'
-            ? 'Appointment template deleted. Upload a new one here.'
+            ? 'Appointment draft deleted.'
             : 'Template deleted. Upload a new one in Settings.';
 
         $this->toastSuccess($message);
@@ -291,7 +323,7 @@ class Letters extends Component
             : null;
 
         $templateBase64 = '';
-        if ($currentTemplate?->template_file_path) {
+        if ($this->letterType === 'posting_letter' && $currentTemplate?->template_file_path) {
             $path = storage_path('app/public/'.$currentTemplate->template_file_path);
             if (file_exists($path)) {
                 $templateBase64 = base64_encode(file_get_contents($path));
