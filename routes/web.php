@@ -65,6 +65,7 @@ Route::middleware('auth:company')->prefix('company')->name('company.')->group(fu
         Route::get('/letters', CompanyLetters::class)->name('letters');
         Route::get('/dms', CompanyDms::class)->name('dms');
         Route::view('profile', 'profile')->name('profile');
+        Route::post('/upload/appointment-letter', [CompanyDocumentUploadController::class, 'appointmentLetter'])->name('upload.appointment-letter');
 
         Route::middleware('role:company_admin')->group(function () {
             Route::get('/endorse', CompanyEndorseLetters::class)->name('endorse');

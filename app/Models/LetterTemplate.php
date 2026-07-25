@@ -25,4 +25,9 @@ class LetterTemplate extends Model
     {
         return $this->hasMany(EndorsedLetter::class);
     }
+
+    public function appointmentLetters()
+    {
+        return $this->hasMany(AppointmentLetter::class);
+    }
 }

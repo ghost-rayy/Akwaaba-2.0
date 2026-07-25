@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Personnel;
 
+use App\Models\AppointmentLetter;
 use App\Models\EndorsedLetter;
 use App\Support\DispatchesToast;
 use Livewire\Component;
@@ -42,8 +43,13 @@ class Documents extends Component
             $q->where('user_id', $user->id);
         })->with(['letterTemplate', 'enrollment.department'])->latest('updated_at')->get();
 
+        $appointmentLetters = AppointmentLetter::whereHas('enrollment', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->with(['letterTemplate', 'enrollment.department'])->latest('updated_at')->get();
+
         return view('livewire.personnel.documents', [
             'endorsedLetters' => $endorsedLetters,
+            'appointmentLetters' => $appointmentLetters,
         ])->layout('layouts.personnel');
     }
 }

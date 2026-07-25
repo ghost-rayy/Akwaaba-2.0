@@ -77,18 +77,15 @@ class LetterEndorsement
         $template->loadMissing('fieldMappings');
 
         $postingLetter = $enrollment->user->documents()->where('type', 'posting_letter')->first();
-        $sourcePdfPath = null;
 
-        if ($postingLetter) {
-            $sourcePdfPath = storage_path('app/public/'.$postingLetter->file_path);
+        if (! $postingLetter) {
+            throw new \RuntimeException('Personnel has not uploaded a posting letter. Endorsement requires the uploaded posting letter PDF.');
         }
 
-        if (! $sourcePdfPath || ! file_exists($sourcePdfPath)) {
-            $sourcePdfPath = storage_path('app/public/'.$template->template_file_path);
-        }
+        $sourcePdfPath = storage_path('app/public/'.$postingLetter->file_path);
 
         if (! file_exists($sourcePdfPath)) {
-            throw new \RuntimeException('Template PDF or uploaded document file not found.');
+            throw new \RuntimeException('Personnel posting letter file not found. Ask them to re-upload their posting letter.');
         }
 
         $pdf = new Fpdi('P', 'pt');
